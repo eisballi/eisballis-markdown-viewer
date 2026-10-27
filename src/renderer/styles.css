@@ -16,6 +16,7 @@
   --shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
   --md-size: 17px;
   --editor-size: 15px;
+  --editor-pad-top: 22px;
   --content-width: 800px;
   --split: 50%;
   --radius: 8px;
@@ -127,6 +128,11 @@ body {
   stroke-linecap: round;
 }
 
+.tb-btn svg.icon-filled {
+  fill: currentColor;
+  stroke: none;
+}
+
 .tb-btn:hover {
   background: var(--accent-soft);
 }
@@ -200,9 +206,14 @@ body {
   text-align: center;
 }
 
-@media (max-width: 1040px) {
-  #toolbar .tb-btn > span:not(.badge) {
+@media (max-width: 1400px) {
+  #toolbar .tb-btn > span:not(.badge):not(#lang-label) {
     display: none;
+  }
+
+  #btn-github > span,
+  #btn-website > span {
+    display: inline;
   }
 
   #toolbar .tb-btn {
@@ -214,7 +225,12 @@ body {
   }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 900px) {
+  #btn-github > span,
+  #btn-website > span {
+    display: none;
+  }
+
   #font-size-label {
     display: none;
   }
@@ -234,28 +250,128 @@ body {
   flex: 0 0 var(--split);
   display: flex;
   min-width: 0;
+  overflow: hidden;
+  border-right: 1px solid var(--border);
+  background: var(--bg-input);
+}
+
+:root[data-mode="edit"] #editor-pane {
+  flex: 1 1 auto;
+  border-right: 0;
+}
+
+#editor-shell {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+}
+
+/* Ohne Vorschau steht der Editor mittig in der Textspaltenbreite. */
+:root[data-mode="edit"] #editor-shell {
+  width: min(var(--content-width), calc(100% - 40px));
+  margin: 0 auto;
+  border-left: 1px solid var(--border);
   border-right: 1px solid var(--border);
 }
 
-#editor {
+#gutter {
+  position: relative;
+  flex: 0 0 auto;
+  width: 58px;
+  overflow: hidden;
+  border-right: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg-input) 72%, var(--bg));
+}
+
+#gutter-inner {
+  position: absolute;
+  top: var(--editor-pad-top);
+  left: 0;
+  right: 0;
+  will-change: transform;
+}
+
+.ln {
+  position: absolute;
+  left: 0;
+  right: 10px;
+  text-align: right;
+  font-family: "Cascadia Mono", "JetBrains Mono", "Consolas", "DejaVu Sans Mono", monospace;
+  font-size: var(--editor-size);
+  line-height: 1.65;
+  color: var(--text-faint);
+  opacity: 0.75;
+  user-select: none;
+}
+
+.ln.changed {
+  color: #f5a245;
+  opacity: 1;
+  font-weight: 600;
+}
+
+#editor-area {
+  position: relative;
   flex: 1 1 auto;
-  width: 100%;
   min-width: 0;
-  padding: 22px 24px 80px;
+}
+
+#editor {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  padding: var(--editor-pad-top) 24px 80px;
   border: 0;
   outline: none;
   resize: none;
-  background: var(--bg-input);
+  background: transparent;
   color: var(--text);
   font-family: "Cascadia Mono", "JetBrains Mono", "Consolas", "DejaVu Sans Mono", monospace;
   font-size: var(--editor-size);
   line-height: 1.65;
   tab-size: 2;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  scrollbar-gutter: stable;
   user-select: text;
 }
 
 #editor::placeholder {
   color: var(--text-faint);
+}
+
+/* Im Split-Modus gibt es nur eine sichtbare Scrollleiste (rechts in der Vorschau). */
+:root[data-mode="split"] #editor {
+  scrollbar-width: none;
+}
+
+:root[data-mode="split"] #editor::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+#editor-mirror {
+  position: absolute;
+  inset: 0;
+  padding: var(--editor-pad-top) 24px 80px;
+  visibility: hidden;
+  pointer-events: none;
+  overflow: hidden;
+  font-family: "Cascadia Mono", "JetBrains Mono", "Consolas", "DejaVu Sans Mono", monospace;
+  font-size: var(--editor-size);
+  line-height: 1.65;
+  tab-size: 2;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+#editor-mirror .mirror-line {
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 #splitter {
@@ -317,6 +433,11 @@ body {
 }
 
 #preview-pane:hover #width-handle {
+  opacity: 0.5;
+}
+
+#width-handle:hover,
+#width-handle.dragging {
   opacity: 1;
 }
 

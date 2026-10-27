@@ -315,21 +315,42 @@ function runDetached(command, args, options = {}) {
 
 async function launchWindowsInstaller(installerPath) {
   const exeToRelaunch = app.getPath('exe');
+  const quote = (value) => `'${String(value).replace(/'/g, "''")}'`;
   const script = [
-    `Start-Process -FilePath '${installerPath.replace(/'/g, "''")}' -ArgumentList '/S' -Wait`,
-    `Start-Sleep -Milliseconds 800`,
-    `Start-Process -FilePath '${exeToRelaunch.replace(/'/g, "''")}'`,
+    // Der App genug Zeit geben, sich zu beenden, bevor Dateien ersetzt werden.
+    'Start-Sleep -Milliseconds 2000',
+    `Start-Process -FilePath ${quote(installerPath)} -ArgumentList '/S' -Wait`,
+    'Start-Sleep -Milliseconds 1000',
+    `Start-Process -FilePath ${quote(exeToRelaunch)}`,
   ].join('; ');
   runDetached('powershell.exe', ['-NoProfile', '-WindowStyle', 'Hidden', '-Command', script]);
+}
+
+function shellQuote(value) {
+  return `'${String(value).replace(/'/g, `'\\''`)}'`;
 }
 
 async function launchLinuxUpdate(filePath, kind) {
   await fsp.chmod(filePath, 0o755);
   if (kind === 'deb') {
     runDetached('xdg-open', [filePath]);
-  } else {
-    runDetached(filePath, []);
+    return;
   }
+
+  const runningAppImage = process.env.APPIMAGE;
+  if (runningAppImage && runningAppImage.toLowerCase().endsWith('.appimage')) {
+    // Neue Version an die Stelle der laufenden AppImage kopieren und starten.
+    const script = [
+      'sleep 3',
+      `cp -f ${shellQuote(filePath)} ${shellQuote(runningAppImage)}`,
+      `chmod +x ${shellQuote(runningAppImage)}`,
+      `exec ${shellQuote(runningAppImage)}`,
+    ].join(' && ');
+    runDetached('bash', ['-c', script]);
+    return;
+  }
+
+  runDetached('bash', ['-c', `sleep 3 && exec ${shellQuote(filePath)}`]);
 }
 
 async function installUpdate({ payload, send }) {

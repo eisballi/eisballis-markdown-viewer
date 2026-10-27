@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "description": "Leichtgewichtiger Markdown-Viewer und -Editor fuer Windows und Linux",
   "main": "src/main.js",
+  "desktopName": "eisballis-markdown-viewer.desktop",
   "author": {
     "name": "Eisballi",
     "email": "eisballi@users.noreply.github.com"

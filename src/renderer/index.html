@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="de" data-theme="dark">
+<html lang="en" data-theme="dark" data-mode="view">
   <head>
     <meta charset="utf-8" />
     <meta
@@ -13,59 +13,67 @@
     <div id="app">
       <header id="toolbar">
         <div class="tb-group">
-          <button id="btn-open" class="tb-btn" type="button" title="Öffnen (Strg+O)">
+          <button id="btn-open" class="tb-btn" type="button" title="Open (Ctrl+O)">
             <svg viewBox="0 0 20 20" aria-hidden="true">
               <path d="M2.5 5.5A1.5 1.5 0 0 1 4 4h3.2l1.6 2h6.2A1.5 1.5 0 0 1 16.5 7.5v6A1.5 1.5 0 0 1 15 15H4a1.5 1.5 0 0 1-1.5-1.5z" />
             </svg>
-            <span>Öffnen</span>
+            <span data-i18n="app.open">Open</span>
           </button>
-          <button id="btn-save" class="tb-btn" type="button" title="Speichern (Strg+S)">
+          <button id="btn-save" class="tb-btn" type="button" title="Save (Ctrl+S)">
             <svg viewBox="0 0 20 20" aria-hidden="true">
               <path d="M4.5 3h8L16 6.5v10a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-13A.5.5 0 0 1 4.5 3Z" />
               <path d="M6.5 3.5v4h6v-4M6.5 11.5h7" />
             </svg>
-            <span>Speichern</span>
+            <span data-i18n="app.save">Save</span>
+          </button>
+          <button id="btn-save-as" class="tb-btn" type="button" title="Save as (Ctrl+Shift+S)">
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M4.5 3h8L16 6.5v10a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-13A.5.5 0 0 1 4.5 3Z" />
+              <path d="M6.5 3.5v4h6v-4M6.5 10.5h4" />
+              <path d="M15.6 13.6v4.6M13.9 16.4l1.7 1.8 1.7-1.8" />
+            </svg>
+            <span data-i18n="app.saveAs">Save as</span>
           </button>
         </div>
 
         <span class="tb-sep"></span>
 
-        <div class="tb-group segmented" id="mode-group" role="group" aria-label="Anzeigemodus">
-          <button class="tb-btn" type="button" data-mode="view" title="Nur Ansicht (Strg+1)">
+        <div class="tb-group segmented" id="mode-group" role="group" aria-label="Display mode">
+          <button class="tb-btn" type="button" data-mode="view" title="View only (Ctrl+1)">
             <svg viewBox="0 0 20 20" aria-hidden="true">
               <path d="M2 10s3-5 8-5 8 5 8 5-3 5-8 5-8-5-8-5Z" />
               <circle cx="10" cy="10" r="2.2" />
             </svg>
-            <span>Ansicht</span>
+            <span data-i18n="mode.view">View</span>
           </button>
-          <button class="tb-btn" type="button" data-mode="edit" title="Nur bearbeiten (Strg+2)">
+          <button class="tb-btn" type="button" data-mode="edit" title="Edit only (Ctrl+2)">
             <svg viewBox="0 0 20 20" aria-hidden="true">
               <path d="M13.2 3.6l3.2 3.2L7 16.2l-4 1 1-4z" />
               <path d="M11.6 5.2l3.2 3.2" />
             </svg>
-            <span>Bearbeiten</span>
+            <span data-i18n="mode.edit">Edit</span>
           </button>
-          <button class="tb-btn" type="button" data-mode="split" title="Geteilt: Editor links, Vorschau rechts (Strg+3)">
+          <button class="tb-btn" type="button" data-mode="split" title="Split: editor left, preview right (Ctrl+3)">
             <svg viewBox="0 0 20 20" aria-hidden="true">
               <rect x="2.5" y="4" width="15" height="12" rx="1.5" />
               <path d="M10 4v12" />
             </svg>
-            <span>Geteilt</span>
+            <span data-i18n="mode.split">Split</span>
           </button>
         </div>
 
         <span class="tb-sep"></span>
 
         <div class="tb-group">
-          <button id="btn-font-dec" class="tb-btn compact" type="button" title="Text kleiner (Strg+-)">A−</button>
-          <span id="font-size-label" class="tb-value" title="Aktuelle Textgröße">17</span>
-          <button id="btn-font-inc" class="tb-btn compact" type="button" title="Text größer (Strg++)">A+</button>
+          <button id="btn-font-dec" class="tb-btn compact" type="button" title="Smaller text (Ctrl+-)">A−</button>
+          <span id="font-size-label" class="tb-value" title="Current text size">17</span>
+          <button id="btn-font-inc" class="tb-btn compact" type="button" title="Larger text (Ctrl++)">A+</button>
         </div>
 
         <span class="tb-sep"></span>
 
         <div class="tb-group">
-          <button id="btn-theme" class="tb-btn compact" type="button" title="Hell / Dunkel (Strg+D)">
+          <button id="btn-theme" class="tb-btn compact" type="button" title="Toggle light / dark (Ctrl+D)">
             <svg class="icon-moon" viewBox="0 0 20 20" aria-hidden="true">
               <path d="M15.5 12.6A6.2 6.2 0 0 1 7.4 4.5a6.5 6.5 0 1 0 8.1 8.1Z" />
             </svg>
@@ -74,7 +82,7 @@
               <path d="M10 1.8v2.1M10 16.1v2.1M1.8 10h2.1M16.1 10h2.1M4.2 4.2l1.5 1.5M14.3 14.3l1.5 1.5M15.8 4.2l-1.5 1.5M5.7 14.3l-1.5 1.5" />
             </svg>
           </button>
-          <button id="btn-reset-width" class="tb-btn compact" type="button" title="Textbreite zurücksetzen">
+          <button id="btn-reset-width" class="tb-btn compact" type="button" title="Reset text width">
             <svg viewBox="0 0 20 20" aria-hidden="true">
               <path d="M2.5 5.5v9M17.5 5.5v9M6.5 10h7M8.2 8.2 6.5 10l1.7 1.8M11.8 8.2 13.5 10l-1.7 1.8" />
             </svg>
@@ -83,15 +91,43 @@
 
         <div class="tb-spacer"></div>
 
-        <button id="btn-update" class="tb-btn ghost" type="button" title="Nach Updates suchen">
+        <button id="btn-update" class="tb-btn ghost" type="button" title="Check for updates">
           <svg viewBox="0 0 20 20" aria-hidden="true">
             <path d="M16 10a6 6 0 1 1-1.9-4.4" />
             <path d="M16.4 3.2v3.6h-3.6" />
           </svg>
-          <span>Nach Updates suchen</span>
+          <span data-i18n="ui.checkUpdates">Check for updates</span>
           <span id="update-badge" class="badge" hidden>1</span>
         </button>
-        <button id="btn-about" class="tb-btn compact" type="button" title="Über &amp; Tastenkürzel">
+
+        <span class="tb-sep"></span>
+
+        <div class="tb-group">
+          <button id="btn-github" class="tb-btn" type="button" title="Open GitHub repository">
+            <svg viewBox="0 0 20 20" aria-hidden="true" class="icon-filled">
+              <path
+                d="M10 1.6a8.4 8.4 0 0 0-2.65 16.37c.42.08.57-.18.57-.4v-1.4c-2.34.5-2.83-1.13-2.83-1.13-.38-.97-.93-1.23-.93-1.23-.76-.52.06-.51.06-.51.84.06 1.28.86 1.28.86.75 1.28 1.96.91 2.44.7.08-.54.29-.91.53-1.12-1.87-.21-3.83-.93-3.83-4.15 0-.92.33-1.67.86-2.26-.09-.21-.37-1.07.08-2.22 0 0 .71-.23 2.32.86a8.1 8.1 0 0 1 4.22 0c1.61-1.09 2.32-.86 2.32-.86.45 1.15.17 2.01.08 2.22.54.59.86 1.34.86 2.26 0 3.23-1.97 3.94-3.85 4.14.3.26.57.78.57 1.57v2.32c0 .22.15.49.58.4A8.4 8.4 0 0 0 10 1.6Z"
+              />
+            </svg>
+            <span>GitHub</span>
+          </button>
+          <button id="btn-website" class="tb-btn" type="button" title="Open eisballi.com">
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <circle cx="10" cy="10" r="7.2" />
+              <path d="M2.9 10h14.2M10 2.8c2 2 3 4.5 3 7.2s-1 5.2-3 7.2c-2-2-3-4.5-3-7.2s1-5.2 3-7.2Z" />
+            </svg>
+            <span>eisballi.com</span>
+          </button>
+          <button id="btn-language" class="tb-btn" type="button" title="Language">
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M3 4.5h6.5M6.2 3v1.5c0 2.8-1.4 5.2-3.4 6.6M4.2 7.2c.6 1.9 2.1 3.4 4.2 4.1" />
+              <path d="M10.5 16.5l3.2-7.5 3.2 7.5M11.7 14h4" />
+            </svg>
+            <span id="lang-label">EN</span>
+          </button>
+        </div>
+
+        <button id="btn-about" class="tb-btn compact" type="button" title="About &amp; shortcuts">
           <svg viewBox="0 0 20 20" aria-hidden="true">
             <circle cx="10" cy="10" r="7.2" />
             <path d="M10 8.8v5" />
@@ -102,43 +138,56 @@
 
       <main id="workspace">
         <div id="editor-pane" hidden>
-          <textarea id="editor" spellcheck="false" placeholder="# Deine Überschrift &#10;&#10;Schreibe hier Markdown …"></textarea>
+          <div id="editor-shell">
+            <div id="gutter" aria-hidden="true">
+              <div id="gutter-inner"></div>
+            </div>
+            <div id="editor-area">
+              <textarea id="editor" spellcheck="false"></textarea>
+              <div id="editor-mirror" aria-hidden="true"></div>
+            </div>
+          </div>
         </div>
 
-        <div id="splitter" hidden title="Ziehen zum Anpassen"></div>
+        <div id="splitter" hidden title="Drag to resize"></div>
 
         <div id="preview-pane">
           <div id="preview-scroll">
             <article id="preview" class="markdown"></article>
           </div>
-          <div id="width-handle" hidden title="Ziehen: Textbreite · Doppelklick: zurücksetzen"></div>
+          <div id="width-handle" hidden title="Drag: text width · Double-click: reset"></div>
           <div id="empty-state">
             <div class="empty-inner">
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M5 3.5h9l5 5v12H5z" />
                 <path d="M14 3.5v5h5M8 13h8M8 16.5h5" />
               </svg>
-              <h1>Keine Datei geöffnet</h1>
-              <p><kbd>Strg</kbd> + <kbd>O</kbd> zum Öffnen — oder eine <code>.md</code>-Datei hierher ziehen.</p>
+              <h1 data-i18n="empty.title">No file open</h1>
+              <p>
+                <span data-i18n="empty.hint1">Press</span> <kbd id="hint-ctrl">Ctrl</kbd> + <kbd>O</kbd>
+                <span data-i18n="empty.hint2">to open a file — or drop a</span>
+                <code>.md</code> <span data-i18n="empty.hint3">file here.</span>
+              </p>
             </div>
           </div>
         </div>
       </main>
 
       <footer id="statusbar">
-        <span id="status-file" title="">Keine Datei geöffnet</span>
+        <span id="status-file" title="">No file open</span>
         <span id="status-meta"></span>
         <span class="status-spacer"></span>
         <span id="status-update" hidden></span>
-        <span id="status-zoom" title="Zoom – mit Strg + Mausrad ändern">100 %</span>
+        <span id="status-zoom" title="Zoom – change with Ctrl + mouse wheel">100 %</span>
         <span id="status-version"></span>
       </footer>
 
       <div id="drop-overlay" hidden>
-        <div class="drop-box">Datei hier ablegen zum Öffnen</div>
+        <div class="drop-box" id="drop-text">Drop a file here to open it</div>
       </div>
     </div>
 
+    <script src="../shared/strings.js"></script>
     <script src="vendor/marked.umd.js"></script>
     <script src="vendor/purify.min.js"></script>
     <script src="renderer.js"></script>

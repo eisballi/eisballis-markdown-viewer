@@ -9,19 +9,20 @@ Standardmäßig startet die App im **Dark Mode** und im **Ansichtsmodus** – al
 
 | Bereich | Details |
 | --- | --- |
-| Oberste Leiste | Öffnen · Speichern · Ansicht · Bearbeiten · Geteilt · Textgröße ± · Hell/Dunkel · Nach Updates suchen |
+| Oberste Leiste | Öffnen · Speichern · Speichern unter · Ansicht · Bearbeiten · Geteilt · Textgröße ± · Hell/Dunkel · Nach Updates suchen · GitHub · eisballi.com · Sprache (EN/DE) |
 | Ansicht | Markdown gerendert (GFM: Tabellen, Aufgabenlisten, Code, Zitate) |
-| Bearbeiten | Klarer Texteditor (Monospace), unsichtbare Formatierungshelfer |
-| Geteilt | Editor links, Vorschau rechts – Trenner frei verschiebbar |
+| Bearbeiten | Texteditor mittig in der Textspaltenbreite, mit **Zeilennummern**; geänderte Zeilennummern sind **orange** markiert |
+| Geteilt | Editor links, Vorschau rechts – Trenner frei verschiebbar, **eine gemeinsame Scrollleiste** (beide Bereiche laufen parallel) |
 | Textbreite | Grauer Griff am rechten Rand der Textspalte, mit der Maus ziehbar; Doppelklick setzt zurück |
 | Zoom | `Strg` + Mausrad zoomt die gesamte Oberfläche stufenlos (50–300 %) |
 | Textgröße | `A−` / `A+` bzw. `Strg` + `-` / `Strg` + `+`, unabhängig vom Zoom |
 | Dateien | Öffnen/Speichern/Speichern unter, Drag & Drop, „zuletzt geöffneter Ordner“ |
+| Sprache | Englisch (Standard) und Deutsch, umschaltbar über die Leiste, das Menü oder `config.json` |
 | Update | Prüft GitHub-Releases **oder** lokale Git-Änderungen, fragt vor der Installation nach |
 | Standardprogramm | `.md`, `.markdown`, `.mdown` – Windows-Installer und Linux-Paket registrieren die Zuordnung |
 
-Alles wird lokal gespeichert (`config.json` im Benutzer-Datenverzeichnis): Theme, Textgröße,
-Textbreite, Split-Verhältnis, Zoom und Fenstergröße.
+Alles wird lokal gespeichert (`config.json` im Benutzer-Datenverzeichnis): Theme, Sprache,
+Textgröße, Textbreite, Split-Verhältnis, Zoom und Fenstergröße.
 
 ## Tastenkürzel
 

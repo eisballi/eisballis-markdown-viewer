@@ -2,10 +2,12 @@
 
 (() => {
   const api = window.api;
+  const STRINGS = window.APP_STRINGS || { en: {} };
 
   const el = {
     open: document.getElementById('btn-open'),
     save: document.getElementById('btn-save'),
+    saveAs: document.getElementById('btn-save-as'),
     modeGroup: document.getElementById('mode-group'),
     fontDec: document.getElementById('btn-font-dec'),
     fontInc: document.getElementById('btn-font-inc'),
@@ -14,10 +16,16 @@
     resetWidth: document.getElementById('btn-reset-width'),
     update: document.getElementById('btn-update'),
     updateBadge: document.getElementById('update-badge'),
+    github: document.getElementById('btn-github'),
+    website: document.getElementById('btn-website'),
+    language: document.getElementById('btn-language'),
+    langLabel: document.getElementById('lang-label'),
     about: document.getElementById('btn-about'),
     workspace: document.getElementById('workspace'),
     editorPane: document.getElementById('editor-pane'),
     editor: document.getElementById('editor'),
+    editorMirror: document.getElementById('editor-mirror'),
+    gutterInner: document.getElementById('gutter-inner'),
     splitter: document.getElementById('splitter'),
     previewPane: document.getElementById('preview-pane'),
     previewScroll: document.getElementById('preview-scroll'),
@@ -30,6 +38,8 @@
     statusZoom: document.getElementById('status-zoom'),
     statusVersion: document.getElementById('status-version'),
     dropOverlay: document.getElementById('drop-overlay'),
+    dropText: document.getElementById('drop-text'),
+    hintCtrl: document.getElementById('hint-ctrl'),
   };
 
   const MIN_TEXT_SIZE = 11;
@@ -39,38 +49,102 @@
   const DEFAULT_WIDTH = 800;
   const MIN_WIDTH = 380;
   const DEFAULT_SPLIT = 0.5;
+  const DEFAULT_TEXT_SIZE = 17;
+  const GUTTER_LINE_LIMIT = 6000;
 
   const state = {
-    appInfo: { version: '0.0.0', platform: 'win32' },
+    appInfo: { version: '0.0.0', platform: 'win32', githubUrl: '', websiteUrl: '' },
+    language: 'en',
     filePath: null,
     baseUrl: null,
     fileName: null,
     dirty: false,
     mode: 'view',
     theme: 'dark',
-    textSize: 17,
+    textSize: DEFAULT_TEXT_SIZE,
     contentWidth: DEFAULT_WIDTH,
     splitRatio: DEFAULT_SPLIT,
     zoom: 1,
     pendingUpdate: null,
     updateBusy: false,
+    baseline: [''],
+    changedLines: new Set(),
   };
 
   let renderTimer = null;
   let statusTimer = null;
   let metaTimer = null;
+  let gutterTimer = null;
+
+  /* ------------------------------------------------------------------ i18n */
+
+  function t(key, vars) {
+    const dict = STRINGS[state.language] || STRINGS.en || {};
+    let value = dict[key];
+    if (value === undefined) value = (STRINGS.en || {})[key];
+    if (value === undefined) value = key;
+    if (vars) {
+      value = value.replace(/\{(\w+)\}/g, (match, name) =>
+        vars[name] === undefined ? match : String(vars[name]),
+      );
+    }
+    return value;
+  }
+
+  function applyLanguage(language, persist = true) {
+    state.language = language === 'de' ? 'de' : 'en';
+    document.documentElement.lang = state.language;
+
+    for (const node of document.querySelectorAll('[data-i18n]')) {
+      node.textContent = t(node.getAttribute('data-i18n'));
+    }
+
+    el.langLabel.textContent = state.language.toUpperCase();
+    el.editor.placeholder = t('editor.placeholder');
+    el.dropText.textContent = t('drop.text');
+    el.hintCtrl.textContent = t('key.ctrl');
+
+    el.open.title = `${t('app.open')} (Ctrl+O)`;
+    el.save.title = `${t('app.save')} (Ctrl+S)`;
+    el.saveAs.title = `${t('app.saveAs')} (Ctrl+Shift+S)`;
+    for (const button of el.modeGroup.querySelectorAll('.tb-btn')) {
+      const mode = button.dataset.mode;
+      const shortKey = mode === 'view' ? 'mode.view' : mode === 'edit' ? 'mode.edit' : 'mode.split';
+      const shortcut = mode === 'view' ? 'Ctrl+1' : mode === 'edit' ? 'Ctrl+2' : 'Ctrl+3';
+      button.title = `${t(shortKey)} (${shortcut})`;
+    }
+    el.fontDec.title = t('ui.textSmaller');
+    el.fontInc.title = t('ui.textLarger');
+    el.fontSizeLabel.title = t('ui.textSize');
+    el.resetWidth.title = t('ui.resetWidth');
+    el.update.title = t('ui.checkUpdates');
+    el.github.title = t('ui.github');
+    el.website.title = t('ui.website');
+    el.language.title = `${t('ui.language')}: ${t('lang.name')} – ${t('lang.next')}`;
+    el.about.title = t('ui.about');
+    updateThemeTitle();
+
+    if (state.filePath) el.statusFile.textContent = state.filePath;
+    else el.statusFile.textContent = t('status.noFile');
+
+    updateTitle();
+    updateMeta();
+
+    if (persist) api.updateSettings({ language: state.language });
+  }
 
   /* ------------------------------------------------------------ rendering */
 
   const slugCounts = new Map();
 
   function slugify(text) {
-    const base = String(text)
-      .toLowerCase()
-      .replace(/[`*_~[\]()#!]/g, '')
-      .trim()
-      .replace(/[^\p{L}\p{N}\s-]/gu, '')
-      .replace(/\s+/g, '-') || 'abschnitt';
+    const base =
+      String(text)
+        .toLowerCase()
+        .replace(/[`*_~[\]()#!]/g, '')
+        .trim()
+        .replace(/[^\p{L}\p{N}\s-]/gu, '')
+        .replace(/\s+/g, '-') || 'section';
     const count = slugCounts.get(base) || 0;
     slugCounts.set(base, count + 1);
     return count ? `${base}-${count}` : base;
@@ -104,7 +178,7 @@
     try {
       html = marked.parse(source, { gfm: true, breaks: false, async: false });
     } catch (error) {
-      el.preview.textContent = `Markdown konnte nicht dargestellt werden: ${error.message}`;
+      el.preview.textContent = error.message;
       return;
     }
 
@@ -130,6 +204,7 @@
 
     updateEmptyState();
     queueHandlePosition();
+    if (state.mode === 'split') syncPreviewToEditor();
   }
 
   function scheduleRender(delay = 220) {
@@ -145,11 +220,11 @@
   /* ------------------------------------------------------------- file ops */
 
   function updateTitle() {
-    const name = state.fileName || (state.filePath ? 'Markdown' : 'Unbenannt');
+    const name = state.fileName || t('title.untitled');
     const title = `${state.dirty ? '• ' : ''}${name} – Eisballis Markdown Viewer`;
     document.title = title;
     api.setTitle(title);
-    el.statusFile.textContent = state.filePath || 'Keine Datei geöffnet';
+    el.statusFile.textContent = state.filePath || t('status.noFile');
     el.statusFile.title = state.filePath || '';
     el.statusFile.classList.toggle('dirty', state.dirty);
   }
@@ -166,31 +241,35 @@
     state.fileName = file.name;
     state.baseUrl = file.baseUrl;
     el.editor.value = file.content ?? '';
+    state.baseline = el.editor.value.split('\n');
+    el.editor.scrollTop = 0;
+    el.previewScroll.scrollTop = 0;
     setDirty(false);
     updateTitle();
     updateMeta();
     updateEmptyState();
     render();
+    scheduleGutter(0);
   }
 
   async function openFile(filePath) {
-    if (!(await confirmDiscardChanges('Öffnen'))) return;
+    if (!(await confirmDiscardChanges(t('dialog.button.open')))) return;
     try {
       const file = await api.openFile(filePath);
       if (!file) return;
       loadFile(file);
-      setStatus(`Geöffnet: ${file.name}`);
+      setStatus(t('status.opened', { name: file.name }));
     } catch (error) {
-      api.message({ type: 'error', message: 'Datei konnte nicht geöffnet werden', detail: error.message });
+      api.message({ type: 'error', message: t('status.fileError'), detail: error.message });
     }
   }
 
   async function confirmDiscardChanges(action) {
     if (!state.dirty) return true;
     const choice = await api.confirm({
-      message: 'Ungespeicherte Änderungen',
-      detail: `Das aktuelle Dokument enthält ungespeicherte Änderungen. Vor „${action}“ speichern?`,
-      buttons: ['Speichern', 'Verwerfen', 'Abbrechen'],
+      message: t('dialog.unsaved.title'),
+      detail: t('dialog.unsaved.detail', { action }),
+      buttons: [t('dialog.button.save'), t('dialog.button.discard'), t('dialog.button.cancel')],
       defaultId: 0,
       cancelId: 2,
     });
@@ -205,12 +284,14 @@
       const result = await api.saveFile({ filePath: state.filePath, content: el.editor.value });
       if (!result) return false;
       state.fileName = result.name;
+      state.baseline = el.editor.value.split('\n');
       setDirty(false);
       updateMeta();
-      setStatus('Gespeichert');
+      scheduleGutter(0);
+      setStatus(t('status.saved'));
       return true;
     } catch (error) {
-      api.message({ type: 'error', message: 'Speichern fehlgeschlagen', detail: error.message });
+      api.message({ type: 'error', message: t('dialog.saveFailed'), detail: error.message });
       return false;
     }
   }
@@ -219,19 +300,21 @@
     try {
       const result = await api.saveFileAs({
         content: el.editor.value,
-        suggestedName: state.fileName || 'unbenannt.md',
+        suggestedName: state.fileName || 'untitled.md',
       });
       if (!result) return false;
       state.filePath = result.path;
       state.fileName = result.name;
       state.baseUrl = result.baseUrl;
+      state.baseline = el.editor.value.split('\n');
       setDirty(false);
       updateTitle();
       updateMeta();
-      setStatus('Gespeichert');
+      scheduleGutter(0);
+      setStatus(t('status.saved'));
       return true;
     } catch (error) {
-      api.message({ type: 'error', message: 'Speichern fehlgeschlagen', detail: error.message });
+      api.message({ type: 'error', message: t('dialog.saveFailed'), detail: error.message });
       return false;
     }
   }
@@ -254,7 +337,7 @@
     const text = el.editor.value;
     const words = text.trim() ? text.trim().split(/\s+/).length : 0;
     const lines = text ? text.split('\n').length : 0;
-    el.statusMeta.textContent = `${words} Wörter · ${text.length} Zeichen · ${lines} Zeilen`;
+    el.statusMeta.textContent = t('status.words', { words, chars: text.length, lines });
   }
 
   function scheduleMeta() {
@@ -264,10 +347,14 @@
 
   /* ------------------------------------------------------------ appearance */
 
+  function updateThemeTitle() {
+    el.theme.title = state.theme === 'dark' ? t('ui.theme.toLight') : t('ui.theme.toDark');
+  }
+
   function applyTheme(theme, persist = true) {
     state.theme = theme === 'light' ? 'light' : 'dark';
     document.documentElement.dataset.theme = state.theme;
-    el.theme.title = state.theme === 'dark' ? 'Zu hellem Modus wechseln (Strg+D)' : 'Zu dunklem Modus wechseln (Strg+D)';
+    updateThemeTitle();
     api.setTheme(state.theme);
     if (persist) api.updateSettings({ theme: state.theme });
   }
@@ -279,6 +366,7 @@
     el.fontSizeLabel.textContent = String(state.textSize);
     if (persist) api.updateSettings({ textSize: state.textSize });
     queueHandlePosition();
+    scheduleGutter(60);
   }
 
   function applyContentWidth(width, persist = true) {
@@ -288,12 +376,14 @@
     document.documentElement.style.setProperty('--content-width', `${state.contentWidth}px`);
     if (persist) api.updateSettings({ contentWidth: state.contentWidth });
     queueHandlePosition();
+    scheduleGutter(60);
   }
 
   function applySplit(ratio, persist = true) {
     state.splitRatio = Math.min(0.8, Math.max(0.2, ratio));
     document.documentElement.style.setProperty('--split', `${state.splitRatio * 100}%`);
     if (persist) api.updateSettings({ splitRatio: state.splitRatio });
+    scheduleGutter(60);
   }
 
   async function applyZoom(factor, persist = true) {
@@ -303,10 +393,12 @@
     el.statusZoom.textContent = `${Math.round(state.zoom * 100)} %`;
     if (persist) api.updateSettings({ zoom: state.zoom });
     queueHandlePosition();
+    scheduleGutter(120);
   }
 
   function setMode(mode, persist = true) {
     state.mode = ['view', 'edit', 'split'].includes(mode) ? mode : 'view';
+    document.documentElement.dataset.mode = state.mode;
 
     for (const button of el.modeGroup.querySelectorAll('.tb-btn')) {
       button.classList.toggle('is-active', button.dataset.mode === state.mode);
@@ -321,10 +413,84 @@
     if (state.mode === 'split') {
       applySplit(state.splitRatio, false);
       el.editor.focus();
+      requestAnimationFrame(() => syncPreviewToEditor());
     }
     if (persist) api.updateSettings({ mode: state.mode });
 
     queueHandlePosition();
+    scheduleGutter(30);
+  }
+
+  /* ---------------------------------------------------------------- gutter */
+
+  function computeChangedLines(lines) {
+    const counts = new Map();
+    for (const line of state.baseline) counts.set(line, (counts.get(line) || 0) + 1);
+    const changed = new Set();
+    for (let index = 0; index < lines.length; index += 1) {
+      const line = lines[index];
+      const remaining = counts.get(line) || 0;
+      if (remaining > 0) counts.set(line, remaining - 1);
+      else changed.add(index);
+    }
+    return changed;
+  }
+
+  function syncGutterScroll() {
+    el.gutterInner.style.transform = `translateY(${-el.editor.scrollTop}px)`;
+  }
+
+  function renderGutter() {
+    const lines = el.editor.value.split('\n');
+    state.changedLines = computeChangedLines(lines);
+
+    const measured = lines.length <= GUTTER_LINE_LIMIT;
+    let heights;
+
+    if (measured) {
+      const mirrorWidth = el.editor.clientWidth;
+      if (mirrorWidth > 0) el.editorMirror.style.width = `${mirrorWidth}px`;
+
+      const mirrorFragment = document.createDocumentFragment();
+      for (const line of lines) {
+        const node = document.createElement('div');
+        node.className = 'mirror-line';
+        node.textContent = line.length ? line : '\u200b';
+        mirrorFragment.appendChild(node);
+      }
+      el.editorMirror.replaceChildren(mirrorFragment);
+      // Bruchgenaue Höhen (nicht gerundet), damit sich über viele Zeilen kein Versatz aufbaut.
+      heights = Array.from(
+        el.editorMirror.children,
+        (node) => node.getBoundingClientRect().height,
+      );
+    } else {
+      const computed = Number.parseFloat(getComputedStyle(el.editor).lineHeight);
+      const uniform = Number.isFinite(computed) && computed > 0 ? computed : 24;
+      heights = new Array(lines.length).fill(uniform);
+    }
+
+    const fragment = document.createDocumentFragment();
+    let top = 0;
+    for (let index = 0; index < lines.length; index += 1) {
+      const number = document.createElement('div');
+      number.className = state.changedLines.has(index) ? 'ln changed' : 'ln';
+      number.style.top = `${top}px`;
+      number.textContent = String(index + 1);
+      fragment.appendChild(number);
+      top += heights[index] || 0;
+    }
+    el.gutterInner.replaceChildren(fragment);
+    el.gutterInner.style.height = `${top}px`;
+    syncGutterScroll();
+  }
+
+  function scheduleGutter(delay = 120) {
+    clearTimeout(gutterTimer);
+    gutterTimer = setTimeout(() => {
+      if (state.mode === 'view') return;
+      renderGutter();
+    }, delay);
   }
 
   /* --------------------------------------------------------- width handle */
@@ -390,11 +556,56 @@
 
     el.widthHandle.addEventListener('dblclick', () => {
       applyContentWidth(DEFAULT_WIDTH);
-      setStatus('Textbreite zurückgesetzt');
+      setStatus(t('status.widthReset'));
     });
   }
 
   /* -------------------------------------------------------------- splitter */
+
+  function scrollRatio(element) {
+    const max = element.scrollHeight - element.clientHeight;
+    if (max <= 0) return 0;
+    return Math.min(1, Math.max(0, element.scrollTop / max));
+  }
+
+  function syncPreviewToEditor() {
+    if (state.mode !== 'split') return;
+    const max = el.previewScroll.scrollHeight - el.previewScroll.clientHeight;
+    if (max <= 0) return;
+    el.previewScroll.scrollTop = Math.round(scrollRatio(el.editor) * max);
+  }
+
+  function setupScrollSync() {
+    let lock = null;
+    const releaseLock = () => {
+      requestAnimationFrame(() => {
+        lock = null;
+      });
+    };
+    const scrollTo = (target, top) => {
+      if (Math.abs(target.scrollTop - top) < 1) return;
+      target.scrollTop = top;
+    };
+
+    el.editor.addEventListener('scroll', () => {
+      syncGutterScroll();
+      if (state.mode !== 'split' || lock === 'editor') return;
+      const max = el.previewScroll.scrollHeight - el.previewScroll.clientHeight;
+      if (max <= 0) return;
+      lock = 'preview';
+      scrollTo(el.previewScroll, Math.round(scrollRatio(el.editor) * max));
+      releaseLock();
+    });
+
+    el.previewScroll.addEventListener('scroll', () => {
+      if (state.mode !== 'split' || lock === 'preview') return;
+      const max = el.editor.scrollHeight - el.editor.clientHeight;
+      if (max <= 0) return;
+      lock = 'editor';
+      scrollTo(el.editor, Math.round(scrollRatio(el.previewScroll) * max));
+      releaseLock();
+    });
+  }
 
   function setupSplitter() {
     let dragging = false;
@@ -433,6 +644,10 @@
 
   /* ------------------------------------------------------------------ links */
 
+  function pathSeparator() {
+    return state.appInfo.platform === 'win32' ? '\\' : '/';
+  }
+
   function fileUrlToPath(url) {
     try {
       const parsed = new URL(url);
@@ -444,8 +659,8 @@
     }
   }
 
-  function pathSeparator() {
-    return state.appInfo.platform === 'win32' ? '\\' : '/';
+  function restoreEditorFocus() {
+    if (state.mode !== 'view') el.editor.focus({ preventScroll: true });
   }
 
   function setupLinkHandling() {
@@ -468,11 +683,8 @@
 
       if (href.startsWith('file:')) {
         const targetPath = fileUrlToPath(href);
-        if (/\.(md|markdown|mdown|mkd|mkdn)$/i.test(targetPath)) {
-          openFile(targetPath);
-        } else {
-          api.openPath(targetPath);
-        }
+        if (/\.(md|markdown|mdown|mkd|mkdn)$/i.test(targetPath)) openFile(targetPath);
+        else api.openPath(targetPath);
       }
     });
   }
@@ -486,13 +698,16 @@
   async function promptUpdate(result) {
     const detailLines = [];
     if (result.notes) detailLines.push(result.notes.trim());
-    if (result.publishedAt) detailLines.push(`Veröffentlicht: ${new Date(result.publishedAt).toLocaleString('de-DE')}`);
-    detailLines.push('Möchtest du jetzt aktualisieren? Die App wird dazu beendet und nach der Installation neu gestartet.');
+    if (result.publishedAt) {
+      const locale = state.language === 'de' ? 'de-DE' : 'en-US';
+      detailLines.push(t('update.published', { date: new Date(result.publishedAt).toLocaleString(locale) }));
+    }
+    detailLines.push(t('update.availableDetail'));
 
     const choice = await api.confirm({
-      message: `Version ${result.latestVersion} ist verfügbar (installiert: ${result.currentVersion}).`,
+      message: t('update.availableMessage', { latest: result.latestVersion, current: result.currentVersion }),
       detail: detailLines.join('\n\n'),
-      buttons: ['Jetzt aktualisieren', 'Später'],
+      buttons: [t('update.now'), t('update.later')],
       defaultId: 0,
       cancelId: 1,
     });
@@ -502,11 +717,9 @@
   async function installUpdate(result) {
     if (!result.asset) {
       const choice = await api.confirm({
-        message: 'Für dieses Update ist kein Installer hinterlegt.',
-        detail:
-          result.notes ||
-          'Veröffentliche im Repository ein Release mit dem Setup-Installer, damit dieser Schritt automatisch funktioniert.',
-        buttons: ['Release-Seite öffnen', 'Abbrechen'],
+        message: t('update.noAssetTitle'),
+        detail: t('update.noAssetDetail'),
+        buttons: [t('update.openRelease'), t('dialog.button.cancel')],
         defaultId: 0,
         cancelId: 1,
       });
@@ -514,12 +727,12 @@
       return;
     }
 
-    setStatus('Update wird heruntergeladen … 0 %', 0);
+    setStatus(t('status.downloading', { percent: 0 }), 0);
     const unsubscribe = api.onUpdateProgress((progress) => {
       if (progress.phase === 'download') {
-        setStatus(`Update wird heruntergeladen … ${progress.percent || 0} %`, 0);
+        setStatus(t('status.downloading', { percent: progress.percent || 0 }), 0);
       } else {
-        setStatus('Update wird installiert …', 0);
+        setStatus(t('status.installing'), 0);
       }
     });
 
@@ -527,28 +740,28 @@
     unsubscribe();
 
     if (!outcome || !outcome.ok) {
-      setStatus('Update fehlgeschlagen');
+      setStatus(t('status.updateFailed'));
       api.message({
         type: 'error',
-        message: 'Update konnte nicht installiert werden',
-        detail: (outcome && outcome.message) || 'Unbekannter Fehler beim Herunterladen oder Starten des Installers.',
+        message: t('update.failedTitle'),
+        detail: (outcome && outcome.message) || t('update.failedDetail'),
       });
       return;
     }
 
     if (outcome.manual) {
-      setStatus('Update heruntergeladen');
+      setStatus(t('status.updateDownloaded'));
       api.message({
-        message: 'Update heruntergeladen',
-        detail: `Die Datei wurde gespeichert unter:\n${outcome.filePath}\n\nBitte installiere sie manuell.`,
+        message: t('update.downloadedTitle'),
+        detail: t('update.downloadedDetail', { path: outcome.filePath }),
       });
       api.showItemInFolder(outcome.filePath);
       return;
     }
 
     await api.message({
-      message: 'Update wird installiert',
-      detail: 'Die Anwendung wird jetzt beendet und nach der Installation automatisch neu gestartet.',
+      message: t('update.installingTitle'),
+      detail: t('update.installingDetail'),
     });
     api.quit();
   }
@@ -557,18 +770,18 @@
     if (state.updateBusy) return;
     state.updateBusy = true;
     el.update.disabled = true;
-    setStatus('Suche nach Updates …', 0);
+    setStatus(t('status.checking'), 0);
 
     try {
       const result = await api.checkUpdates({ force: manual });
       await handleUpdateResult(result, manual);
     } catch (error) {
-      setStatus('Update-Prüfung fehlgeschlagen');
+      setStatus(t('status.checkFailed'));
       if (manual) {
         api.message({
           type: 'error',
-          message: 'Update-Prüfung fehlgeschlagen',
-          detail: `${error.message}\n\nPrüfe die Internetverbindung und die Update-Quelle.`,
+          message: t('status.checkFailed'),
+          detail: error.message,
         });
       }
     } finally {
@@ -585,12 +798,14 @@
       showUpdateBadge(true);
 
       if (!result.asset) {
-        setStatus(`Repo-Änderungen erkannt: ${result.commitsBehind} neue(r) Commit(s)`);
+        setStatus(t('status.repoChanges', { count: result.commitsBehind || 0 }));
         if (manual) {
           const choice = await api.confirm({
-            message: 'Es gibt Änderungen im Code-Repository.',
-            detail: `${result.notes || ''}\n\nEs liegt kein fertiger Installer vor. Soll das Repository-Verzeichnis geöffnet werden, um neu zu bauen?`,
-            buttons: ['Ordner öffnen', 'Schließen'],
+            message: t('update.repoChangesTitle'),
+            detail: t('update.repoChangesDetail', {
+              notes: result.notes || t('update.gitCommits', { count: result.commitsBehind || 0 }),
+            }),
+            buttons: [t('update.openFolder'), t('dialog.button.close')],
             defaultId: 0,
             cancelId: 1,
           });
@@ -599,31 +814,29 @@
         return;
       }
 
-      setStatus(`Update ${result.latestVersion} verfügbar`, 0);
+      setStatus(t('status.updateAvailable', { version: result.latestVersion }), 0);
       await promptUpdate(result);
       return;
     }
 
     if (result.status === 'current') {
       showUpdateBadge(false);
-      setStatus(`Aktuell (Version ${result.currentVersion})`);
+      setStatus(t('status.upToDate', { version: result.currentVersion }));
       if (manual) {
         api.message({
-          message: 'Du bist auf dem neuesten Stand.',
-          detail: `Installierte Version: ${result.currentVersion}`,
+          message: t('update.currentTitle'),
+          detail: t('update.currentDetail', { version: result.currentVersion }),
         });
       }
       return;
     }
 
     showUpdateBadge(false);
-    setStatus('Keine Update-Quelle erreichbar');
+    setStatus(t('status.noSource'));
     if (manual) {
       api.message({
-        message: 'Keine Update-Quelle gefunden',
-        detail:
-          'Es wurde weder ein veröffentlichtes Release noch ein lokales Git-Repository mit Upstream gefunden.\n\n' +
-          `Details: ${result.notes || 'unbekannt'}`,
+        message: t('update.noSourceTitle'),
+        detail: t('update.noSourceDetail', { notes: result.notes || '—' }),
       });
     }
   }
@@ -631,24 +844,21 @@
   /* --------------------------------------------------------------- dialogs */
 
   async function showAbout() {
-    const shortcuts = [
-      'Strg+O  Öffnen',
-      'Strg+S  Speichern',
-      'Strg+Shift+S  Speichern unter',
-      'Strg+1 / 2 / 3  Ansicht / Bearbeiten / Geteilt',
-      'Strg+D  Hell/Dunkel',
-      'Strg + Mausrad  Zoom',
-      'Strg+ + / -   Textgröße',
-      'Doppelklick auf Breiten-Griff  Textbreite zurücksetzen',
-    ].join('\n');
-
     await api.message({
-      message: `Eisballis Markdown Viewer ${state.appInfo.version}`,
-      detail: `Plattform: ${state.appInfo.platform}\n\nTastenkürzel:\n${shortcuts}`,
+      message: t('about.title', { version: state.appInfo.version }),
+      detail: t('about.detail', {
+        platform: state.appInfo.platform,
+        shortcuts: t('about.shortcuts'),
+      }),
     });
   }
 
-  /* ------------------------------------------------------------- key events */
+  function toggleLanguage() {
+    applyLanguage(state.language === 'de' ? 'en' : 'de');
+    setStatus(`${t('ui.language')}: ${t('lang.name')}`, 2500);
+  }
+
+  /* ------------------------------------------------------------ key events */
 
   function insertText(text) {
     const { selectionStart, selectionEnd, value } = el.editor;
@@ -661,8 +871,7 @@
   function wrapSelection(before, after = before) {
     const { selectionStart, selectionEnd, value } = el.editor;
     const selected = value.slice(selectionStart, selectionEnd);
-    const next =
-      value.slice(0, selectionStart) + before + selected + after + value.slice(selectionEnd);
+    const next = value.slice(0, selectionStart) + before + selected + after + value.slice(selectionEnd);
     el.editor.value = next;
     el.editor.selectionStart = selectionStart + before.length;
     el.editor.selectionEnd = selectionEnd + before.length;
@@ -672,6 +881,7 @@
   function handleEditorInput() {
     setDirty(true);
     scheduleMeta();
+    scheduleGutter();
     if (state.mode !== 'edit') scheduleRender();
     updateEmptyState();
   }
@@ -705,8 +915,7 @@
       (event) => {
         if (!event.ctrlKey) return;
         event.preventDefault();
-        const step = event.deltaY < 0 ? 0.1 : -0.1;
-        applyZoom(state.zoom + step);
+        applyZoom(state.zoom + (event.deltaY < 0 ? 0.1 : -0.1));
       },
       { passive: false },
     );
@@ -723,12 +932,12 @@
         applyTextSize(state.textSize - 1);
       } else if (event.key === '0') {
         event.preventDefault();
-        applyTextSize(17);
+        applyTextSize(DEFAULT_TEXT_SIZE);
       }
     });
   }
 
-  /* ------------------------------------------------------------- drag & drop */
+  /* ------------------------------------------------------------ drag & drop */
 
   function setupDragAndDrop() {
     let depth = 0;
@@ -761,7 +970,7 @@
     });
   }
 
-  /* ------------------------------------------------------------- commands */
+  /* ---------------------------------------------------------------- commands */
 
   function setupCommands() {
     api.onCommand(async (command) => {
@@ -780,7 +989,7 @@
           break;
         case 'reveal':
           if (state.filePath) api.showItemInFolder(state.filePath);
-          else api.message({ message: 'Es ist keine Datei geöffnet.' });
+          else api.message({ message: t('dialog.noFileOpen') });
           break;
         case 'mode-view':
           setMode('view');
@@ -798,7 +1007,7 @@
           applyTextSize(state.textSize - 1);
           break;
         case 'font-reset':
-          applyTextSize(17);
+          applyTextSize(DEFAULT_TEXT_SIZE);
           break;
         case 'zoom-reset':
           applyZoom(1);
@@ -808,6 +1017,18 @@
           break;
         case 'check-updates':
           checkForUpdates({ manual: true });
+          break;
+        case 'language-en':
+          applyLanguage('en');
+          break;
+        case 'language-de':
+          applyLanguage('de');
+          break;
+        case 'github':
+          if (state.appInfo.githubUrl) api.openExternal(state.appInfo.githubUrl);
+          break;
+        case 'website':
+          if (state.appInfo.websiteUrl) api.openExternal(state.appInfo.websiteUrl);
           break;
         case 'about':
           showAbout();
@@ -824,21 +1045,39 @@
     api.onUpdateAvailable((result) => {
       state.pendingUpdate = result;
       showUpdateBadge(true);
-      setStatus(`Update ${result.latestVersion} verfügbar – zum Installieren auf „Nach Updates suchen“ klicken`, 0);
+      setStatus(t('status.updateHint', { version: result.latestVersion }), 0);
     });
   }
 
-  /* -------------------------------------------------------------- wiring */
+  /* ---------------------------------------------------------------- wiring */
 
   function setupToolbar() {
     el.open.addEventListener('click', () => openFile());
     el.save.addEventListener('click', () => save());
-    el.fontDec.addEventListener('click', () => applyTextSize(state.textSize - 1));
-    el.fontInc.addEventListener('click', () => applyTextSize(state.textSize + 1));
-    el.theme.addEventListener('click', () => applyTheme(state.theme === 'dark' ? 'light' : 'dark'));
+    el.saveAs.addEventListener('click', () => saveAs());
+
+    el.fontDec.addEventListener('click', () => {
+      applyTextSize(state.textSize - 1);
+      restoreEditorFocus();
+    });
+    el.fontInc.addEventListener('click', () => {
+      applyTextSize(state.textSize + 1);
+      restoreEditorFocus();
+    });
+    el.theme.addEventListener('click', () => {
+      applyTheme(state.theme === 'dark' ? 'light' : 'dark');
+      restoreEditorFocus();
+    });
     el.resetWidth.addEventListener('click', () => {
       applyContentWidth(DEFAULT_WIDTH);
-      setStatus('Textbreite zurückgesetzt');
+      setStatus(t('status.widthReset'));
+    });
+    el.language.addEventListener('click', toggleLanguage);
+    el.github.addEventListener('click', () => {
+      if (state.appInfo.githubUrl) api.openExternal(state.appInfo.githubUrl);
+    });
+    el.website.addEventListener('click', () => {
+      if (state.appInfo.websiteUrl) api.openExternal(state.appInfo.websiteUrl);
     });
     el.about.addEventListener('click', showAbout);
 
@@ -856,8 +1095,9 @@
   }
 
   function applyInitialSettings(settings) {
+    applyLanguage(settings.language === 'de' ? 'de' : 'en', false);
     applyTheme(settings.theme === 'light' ? 'light' : 'dark', false);
-    applyTextSize(Number(settings.textSize) || 17, false);
+    applyTextSize(Number(settings.textSize) || DEFAULT_TEXT_SIZE, false);
     applyContentWidth(Number(settings.contentWidth) || DEFAULT_WIDTH, false);
     applySplit(Number(settings.splitRatio) || DEFAULT_SPLIT, false);
     setMode(settings.mode || 'view', false);
@@ -865,9 +1105,13 @@
   }
 
   function setupResizeObserver() {
-    const observer = new ResizeObserver(() => queueHandlePosition());
+    const observer = new ResizeObserver(() => {
+      queueHandlePosition();
+      scheduleGutter(120);
+    });
     observer.observe(el.previewPane);
     observer.observe(el.preview);
+    observer.observe(el.editorPane);
   }
 
   async function init() {
@@ -887,16 +1131,28 @@
     setupDragAndDrop();
     setupWidthHandle();
     setupSplitter();
+    setupScrollSync();
     setupLinkHandling();
     setupResizeObserver();
 
     applyInitialSettings(state.appInfo.settings || {});
     updateTitle();
     updateMeta();
+    scheduleGutter(0);
 
-    window.addEventListener('resize', () => queueHandlePosition(150));
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(() => scheduleGutter(0));
+    }
 
-    setStatus('Bereit', 2500);
+    const pendingFile = await api.pendingFile();
+    if (pendingFile) await openFile(pendingFile);
+
+    window.addEventListener('resize', () => {
+      queueHandlePosition(150);
+      scheduleGutter(150);
+    });
+
+    setStatus(t('status.ready'), 2500);
   }
 
   window.addEventListener('DOMContentLoaded', init);

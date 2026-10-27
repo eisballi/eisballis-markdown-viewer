@@ -7,12 +7,15 @@ const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 
 const updater = require('./updater');
+const STRINGS = require('./shared/strings.js');
 
 const APP_NAME = 'Eisballis Markdown Viewer';
+const WEBSITE_URL = 'https://eisballi.com';
 const MAX_FILE_SIZE = 20 * 1024 * 1024;
 const isDev = !app.isPackaged;
 
 const DEFAULT_SETTINGS = {
+  language: 'en',
   theme: 'dark',
   mode: 'view',
   textSize: 17,
@@ -28,6 +31,18 @@ let mainWindow = null;
 let rendererDirty = false;
 let allowClose = false;
 let pendingFilePath = null;
+
+function tr(key, vars) {
+  const dict = STRINGS[settings.language] || STRINGS.en;
+  let value = dict[key] !== undefined ? dict[key] : STRINGS.en[key];
+  if (value === undefined) value = key;
+  if (vars) {
+    value = value.replace(/\{(\w+)\}/g, (match, name) =>
+      vars[name] === undefined ? match : String(vars[name]),
+    );
+  }
+  return value;
+}
 
 /* ------------------------------------------------------------------ settings */
 
@@ -145,13 +160,13 @@ function createWindow() {
     event.preventDefault();
     const choice = dialog.showMessageBoxSync(win, {
       type: 'warning',
-      buttons: ['Speichern und schließen', 'Ohne Speichern schließen', 'Abbrechen'],
+      buttons: [tr('dialog.close.save'), tr('dialog.close.discard'), tr('dialog.close.cancel')],
       defaultId: 0,
       cancelId: 2,
       noLink: true,
-      title: 'Ungespeicherte Änderungen',
-      message: 'Das Dokument enthält ungespeicherte Änderungen.',
-      detail: 'Möchtest du vor dem Schließen speichern?',
+      title: tr('dialog.close.title'),
+      message: tr('dialog.close.message'),
+      detail: tr('dialog.close.detail'),
     });
     if (choice === 0) win.webContents.send('command', 'save-and-close');
     if (choice === 1) {
@@ -191,55 +206,78 @@ function sendCommand(command) {
 }
 
 function buildMenu() {
+  const language = settings.language === 'de' ? 'de' : 'en';
   const template = [
     {
-      label: 'Datei',
+      label: tr('menu.file'),
       submenu: [
-        { label: 'Öffnen …', accelerator: 'CmdOrCtrl+O', click: () => sendCommand('open') },
-        { label: 'Speichern', accelerator: 'CmdOrCtrl+S', click: () => sendCommand('save') },
-        { label: 'Speichern unter …', accelerator: 'CmdOrCtrl+Shift+S', click: () => sendCommand('save-as') },
+        { label: tr('menu.open'), accelerator: 'CmdOrCtrl+O', click: () => sendCommand('open') },
+        { label: tr('menu.save'), accelerator: 'CmdOrCtrl+S', click: () => sendCommand('save') },
+        { label: tr('menu.saveAs'), accelerator: 'CmdOrCtrl+Shift+S', click: () => sendCommand('save-as') },
         { type: 'separator' },
-        { label: 'Datei im Ordner anzeigen', click: () => sendCommand('reveal') },
+        { label: tr('menu.reveal'), click: () => sendCommand('reveal') },
         { type: 'separator' },
-        { label: 'Beenden', role: 'quit' },
+        { label: tr('menu.quit'), role: 'quit' },
       ],
     },
     {
-      label: 'Bearbeiten',
+      label: tr('menu.edit'),
       submenu: [
-        { role: 'undo', label: 'Rückgängig' },
-        { role: 'redo', label: 'Wiederherstellen' },
+        { role: 'undo', label: tr('menu.undo') },
+        { role: 'redo', label: tr('menu.redo') },
         { type: 'separator' },
-        { role: 'cut', label: 'Ausschneiden' },
-        { role: 'copy', label: 'Kopieren' },
-        { role: 'paste', label: 'Einfügen' },
-        { role: 'selectAll', label: 'Alles auswählen' },
+        { role: 'cut', label: tr('menu.cut') },
+        { role: 'copy', label: tr('menu.copy') },
+        { role: 'paste', label: tr('menu.paste') },
+        { role: 'selectAll', label: tr('menu.selectAll') },
       ],
     },
     {
-      label: 'Ansicht',
+      label: tr('menu.view'),
       submenu: [
-        { label: 'Ansicht', accelerator: 'CmdOrCtrl+1', click: () => sendCommand('mode-view') },
-        { label: 'Bearbeiten', accelerator: 'CmdOrCtrl+2', click: () => sendCommand('mode-edit') },
-        { label: 'Geteilte Ansicht', accelerator: 'CmdOrCtrl+3', click: () => sendCommand('mode-split') },
+        { label: tr('menu.modeView'), accelerator: 'CmdOrCtrl+1', click: () => sendCommand('mode-view') },
+        { label: tr('menu.modeEdit'), accelerator: 'CmdOrCtrl+2', click: () => sendCommand('mode-edit') },
+        { label: tr('menu.modeSplit'), accelerator: 'CmdOrCtrl+3', click: () => sendCommand('mode-split') },
         { type: 'separator' },
-        { label: 'Text größer', click: () => sendCommand('font-inc') },
-        { label: 'Text kleiner', click: () => sendCommand('font-dec') },
-        { label: 'Textgröße zurücksetzen', click: () => sendCommand('font-reset') },
+        { label: tr('menu.textLarger'), click: () => sendCommand('font-inc') },
+        { label: tr('menu.textSmaller'), click: () => sendCommand('font-dec') },
+        { label: tr('menu.textReset'), click: () => sendCommand('font-reset') },
         { type: 'separator' },
-        { label: 'Zoom zurücksetzen', click: () => sendCommand('zoom-reset') },
-        { label: 'Hell / Dunkel umschalten', accelerator: 'CmdOrCtrl+D', click: () => sendCommand('toggle-theme') },
+        { label: tr('menu.zoomReset'), click: () => sendCommand('zoom-reset') },
+        { label: tr('menu.theme'), accelerator: 'CmdOrCtrl+D', click: () => sendCommand('toggle-theme') },
         { type: 'separator' },
-        { role: 'togglefullscreen', label: 'Vollbild' },
-        { role: 'reload', label: 'Neu laden' },
-        ...(isDev ? [{ role: 'toggleDevTools', label: 'Entwicklertools' }] : []),
+        {
+          label: tr('menu.language'),
+          submenu: [
+            {
+              label: 'English',
+              type: 'radio',
+              checked: language === 'en',
+              click: () => sendCommand('language-en'),
+            },
+            {
+              label: 'Deutsch',
+              type: 'radio',
+              checked: language === 'de',
+              click: () => sendCommand('language-de'),
+            },
+          ],
+        },
+        { type: 'separator' },
+        { role: 'togglefullscreen', label: tr('menu.fullscreen') },
+        { role: 'reload', label: tr('menu.reload') },
+        ...(isDev ? [{ role: 'toggleDevTools', label: tr('menu.devtools') }] : []),
       ],
     },
     {
-      label: 'Hilfe',
+      label: tr('menu.help'),
       submenu: [
-        { label: 'Nach Updates suchen …', click: () => sendCommand('check-updates') },
-        { label: 'Über', click: () => sendCommand('about') },
+        { label: tr('menu.checkUpdates'), click: () => sendCommand('check-updates') },
+        { type: 'separator' },
+        { label: tr('menu.github'), click: () => sendCommand('github') },
+        { label: tr('menu.website'), click: () => sendCommand('website') },
+        { type: 'separator' },
+        { label: tr('menu.about'), click: () => sendCommand('about') },
       ],
     },
   ];
@@ -254,15 +292,26 @@ function registerIpc() {
     version: app.getVersion(),
     platform: process.platform,
     isPackaged: app.isPackaged,
+    githubUrl: `https://github.com/${updater.repoSlug()}`,
+    websiteUrl: WEBSITE_URL,
     settings,
   }));
 
+  ipcMain.handle('app:pending-file', () => {
+    const filePath = pendingFilePath;
+    pendingFilePath = null;
+    return filePath;
+  });
+
   ipcMain.handle('settings:update', (_event, patch) => {
     if (!patch || typeof patch !== 'object') return settings;
+    const previousLanguage = settings.language;
     const next = { ...settings, ...patch };
     next.bounds = settings.bounds; // window bounds are managed by the main process only
+    next.language = next.language === 'de' ? 'de' : 'en';
     settings = next;
     saveSettingsSoon();
+    if (settings.language !== previousLanguage) buildMenu();
     return settings;
   });
 
@@ -445,18 +494,13 @@ if (!gotLock) {
   });
 
   app.whenReady().then(() => {
+    app.setAppUserModelId('de.eisballi.markdownviewer');
     loadSettings();
     nativeTheme.themeSource = settings.theme === 'light' ? 'light' : 'dark';
     pendingFilePath = fileFromArgv(process.argv);
     registerIpc();
     buildMenu();
     createWindow();
-
-    if (pendingFilePath) {
-      mainWindow.webContents.once('did-finish-load', () => {
-        mainWindow.webContents.send('command:open-path', pendingFilePath);
-      });
-    }
 
     if (settings.autoCheckUpdates) {
       setTimeout(async () => {

@@ -10,6 +10,7 @@ const subscribe = (channel, callback) => {
 
 contextBridge.exposeInMainWorld('api', {
   info: () => ipcRenderer.invoke('app:info'),
+  pendingFile: () => ipcRenderer.invoke('app:pending-file'),
   openFile: (filePath) => ipcRenderer.invoke('file:open', filePath || undefined),
   reloadFile: (filePath) => ipcRenderer.invoke('file:reload', filePath),
   saveFile: (payload) => ipcRenderer.invoke('file:save', payload),

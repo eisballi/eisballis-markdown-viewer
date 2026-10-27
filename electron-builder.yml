@@ -8,6 +8,7 @@ directories:
 
 files:
   - src/**/*
+  - build/icon.png
   - package.json
   - "!**/*.map"
 
@@ -56,6 +57,7 @@ portable:
 linux:
   icon: build/icons
   executableName: eisballis-markdown-viewer
+  syncDesktopName: true
   category: Office
   synopsis: Leichtgewichtiger Markdown-Viewer und -Editor
   description: >-
