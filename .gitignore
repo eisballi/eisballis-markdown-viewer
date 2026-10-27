@@ -1,0 +1,9 @@
+node_modules/
+release/
+dist/
+src/renderer/vendor/
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+desktop.ini

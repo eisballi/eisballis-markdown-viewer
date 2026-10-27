@@ -1,0 +1,87 @@
+appId: de.eisballi.markdownviewer
+productName: Eisballis Markdown Viewer
+copyright: Copyright © 2026 Eisballi
+
+directories:
+  output: release
+  buildResources: build
+
+files:
+  - src/**/*
+  - package.json
+  - "!**/*.map"
+
+asar: true
+compression: maximum
+
+win:
+  icon: build/icon.ico
+  target:
+    - target: nsis
+      arch: [x64]
+    - target: portable
+      arch: [x64]
+  fileAssociations:
+    - ext: md
+      name: Markdown-Dokument
+      description: Markdown-Datei
+      role: Editor
+      icon: build/icon.ico
+    - ext: markdown
+      name: Markdown-Dokument
+      description: Markdown-Datei
+      role: Editor
+      icon: build/icon.ico
+    - ext: mdown
+      name: Markdown-Dokument
+      description: Markdown-Datei
+      role: Editor
+      icon: build/icon.ico
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowElevation: true
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Eisballis Markdown Viewer
+  runAfterFinish: true
+  deleteAppDataOnUninstall: false
+  artifactName: Eisballis-Markdown-Viewer-Setup-${version}.${ext}
+
+portable:
+  artifactName: Eisballis-Markdown-Viewer-${version}-portable.${ext}
+
+linux:
+  icon: build/icons
+  executableName: eisballis-markdown-viewer
+  category: Office
+  synopsis: Leichtgewichtiger Markdown-Viewer und -Editor
+  description: >-
+    Sehr schlanker Markdown-Viewer mit einfachem Editor, Live-Vorschau,
+    hellem und dunklem Design sowie Update-Prüfung.
+  target:
+    - target: AppImage
+      arch: [x64]
+    - target: deb
+      arch: [x64]
+  mimeTypes:
+    - text/markdown
+    - text/x-markdown
+  desktop:
+    entry:
+      Name: Eisballis Markdown Viewer
+      GenericName: Markdown Viewer
+      Comment: Markdown-Dateien anzeigen und einfach bearbeiten
+      Keywords: markdown;md;viewer;editor;
+      Categories: Office;Viewer;TextEditor;
+      MimeType: text/markdown;text/x-markdown;
+      StartupWMClass: eisballis-markdown-viewer
+  artifactName: Eisballis-Markdown-Viewer-${version}-${arch}.${ext}
+
+appImage:
+  artifactName: Eisballis-Markdown-Viewer-${version}-${arch}.${ext}
+
+deb:
+  artifactName: Eisballis-Markdown-Viewer-${version}-${arch}.${ext}
