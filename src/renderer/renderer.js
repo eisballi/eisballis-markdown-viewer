@@ -24,6 +24,8 @@
     editorPane: document.getElementById('editor-pane'),
     editor: document.getElementById('editor'),
     editorMirror: document.getElementById('editor-mirror'),
+    editHandle: document.getElementById('edit-handle'),
+    editHandleRight: document.getElementById('edit-handle-right'),
     gutterInner: document.getElementById('gutter-inner'),
     splitter: document.getElementById('splitter'),
     previewPane: document.getElementById('preview-pane'),
@@ -63,6 +65,7 @@
     theme: 'dark',
     textSize: DEFAULT_TEXT_SIZE,
     contentWidth: DEFAULT_WIDTH,
+    editWidth: DEFAULT_WIDTH,
     splitRatio: DEFAULT_SPLIT,
     zoom: 1,
     pendingUpdate: null,
@@ -75,7 +78,7 @@
   let statusTimer = null;
   let metaTimer = null;
   let gutterTimer = null;
-  let editPad = { left: -1, right: -1 };
+  let editPad = { left: -1, right: -1, rightEdge: -1 };
 
   /* ------------------------------------------------------------------ i18n */
 
@@ -371,13 +374,28 @@
   }
 
   function applyContentWidth(width, persist = true) {
-    const paneWidth = el.previewPane.clientWidth || 800;
-    const max = Math.max(MIN_WIDTH, paneWidth - 24);
-    state.contentWidth = Math.min(max, Math.max(MIN_WIDTH, Math.round(width)));
-    document.documentElement.style.setProperty('--content-width', `${state.contentWidth}px`);
-    if (persist) api.updateSettings({ contentWidth: state.contentWidth });
+    const editMode = state.mode === 'edit';
+    const paneWidth = editMode ? editorAvailableWidth() : el.previewPane.clientWidth || 800;
+    const reserve = editMode ? GUTTER_WIDTH + 24 : 24;
+    const max = Math.max(MIN_WIDTH, paneWidth - reserve);
+    const clamped = Math.min(max, Math.max(MIN_WIDTH, Math.round(width)));
+
+    if (editMode) {
+      state.editWidth = clamped;
+      if (persist) api.updateSettings({ editWidth: clamped });
+    } else {
+      state.contentWidth = clamped;
+      if (persist) api.updateSettings({ contentWidth: clamped });
+    }
+
+    document.documentElement.style.setProperty('--content-width', `${clamped}px`);
     queueHandlePosition();
     scheduleGutter(60);
+  }
+
+  function editorAvailableWidth() {
+    const scrollbar = Math.max(0, el.editor.offsetWidth - el.editor.clientWidth);
+    return Math.max(200, (el.editorPane.clientWidth || 800) - scrollbar);
   }
 
   function applySplit(ratio, persist = true) {
@@ -408,6 +426,9 @@
     el.editorPane.hidden = state.mode === 'view';
     el.previewPane.hidden = state.mode === 'edit';
     el.splitter.hidden = state.mode !== 'split';
+    el.widthHandle.hidden = state.mode !== 'view';
+    el.editHandle.hidden = state.mode !== 'edit';
+    el.editHandleRight.hidden = state.mode !== 'edit';
 
     if (state.mode !== 'edit') render();
     if (state.mode === 'edit') el.editor.focus();
@@ -417,6 +438,12 @@
       requestAnimationFrame(() => syncPreviewToEditor());
     }
     if (persist) api.updateSettings({ mode: state.mode });
+
+    if (state.mode === 'edit') {
+      applyContentWidth(state.editWidth, false);
+    } else if (state.contentWidth) {
+      document.documentElement.style.setProperty('--content-width', `${state.contentWidth}px`);
+    }
 
     queueHandlePosition();
     scheduleGutter(30);
@@ -492,15 +519,15 @@
       if (state.mode === 'view') return;
       updateEditLayout();
       renderGutter();
-      const before = `${editPad.left}:${editPad.right}`;
+      const before = `${editPad.left}:${editPad.right}:${editPad.rightEdge}`;
       updateEditLayout();
-      if (`${editPad.left}:${editPad.right}` !== before) renderGutter();
+      if (`${editPad.left}:${editPad.right}:${editPad.rightEdge}` !== before) renderGutter();
     }, delay);
   }
 
   /**
-   * Rein rechter Rand im Bearbeiten-Modus: Der Textblock bleibt mittig, die
-   * Scrollleiste gehört aber zum Vollbreiten-Editor und sitzt am Fensterrand.
+   * Bearbeiten-Modus: Textblock mittig (endet vor dem rechten Rand), Breite über
+   * beide Kanten einstellbar, Scrollleiste bleibt am Fensterrand.
    */
   function updateEditLayout() {
     if (state.mode !== 'edit') return;
@@ -509,25 +536,42 @@
 
     const scrollbar = Math.max(0, el.editor.offsetWidth - el.editor.clientWidth);
     const avail = Math.max(160, pane - scrollbar);
-    const width = Math.min(state.contentWidth, Math.max(MIN_WIDTH, pane - 40));
+    const width = Math.min(state.editWidth, Math.max(MIN_WIDTH, avail - GUTTER_WIDTH - 24));
     const free = Math.max(0, avail - GUTTER_WIDTH - width);
     const left = Math.round(free / 2);
     const right = Math.round(free - left);
+    const rightEdge = Math.round(left + GUTTER_WIDTH + width);
 
-    if (left === editPad.left && right === editPad.right) return;
-    editPad = { left, right };
+    if (
+      left === editPad.left &&
+      right === editPad.right &&
+      rightEdge === editPad.rightEdge
+    ) {
+      return;
+    }
+    editPad = { left, right, rightEdge };
     document.documentElement.style.setProperty('--edit-pad-left', `${left}px`);
     document.documentElement.style.setProperty('--edit-pad-right', `${right}px`);
     document.documentElement.style.setProperty('--edit-scrollbar', `${scrollbar}px`);
+    document.documentElement.style.setProperty('--edit-right-edge', `${rightEdge}px`);
   }
 
   /* --------------------------------------------------------- width handle */
 
   function positionWidthHandle() {
-    if (state.mode === 'edit') {
+    const editMode = state.mode === 'edit';
+    el.editHandle.hidden = !editMode;
+    el.editHandleRight.hidden = !editMode;
+
+    if (editMode) {
       el.widthHandle.hidden = true;
+      updateEditLayout();
       return;
     }
+
+    el.widthHandle.hidden = state.mode === 'split';
+    if (state.mode === 'split') return;
+
     const previewRect = el.preview.getBoundingClientRect();
     const paneRect = el.previewPane.getBoundingClientRect();
     if (!previewRect.width || !paneRect.width) {
@@ -539,11 +583,13 @@
   }
 
   function queueHandlePosition(delay = 0) {
+    const run = () => positionWidthHandle();
     requestAnimationFrame(() => {
-      positionWidthHandle();
-      requestAnimationFrame(() => positionWidthHandle());
+      run();
+      requestAnimationFrame(run);
     });
-    if (delay) setTimeout(positionWidthHandle, delay);
+    setTimeout(run, 16);
+    if (delay) setTimeout(run, delay);
   }
 
   function setupWidthHandle() {
@@ -586,6 +632,53 @@
       applyContentWidth(DEFAULT_WIDTH);
       setStatus(t('status.widthReset'));
     });
+  }
+
+  /** Linke Kante im Bearbeiten-Modus: Breite wächst nach links. */
+  function setupEditHandle() {
+    const bind = (handle, sign) => {
+      let dragging = false;
+      let startX = 0;
+      let startWidth = 0;
+
+      handle.addEventListener('pointerdown', (event) => {
+        if (event.button !== 0) return;
+        dragging = true;
+        startX = event.clientX;
+        startWidth = state.editWidth;
+        handle.classList.add('dragging');
+        handle.setPointerCapture(event.pointerId);
+        event.preventDefault();
+      });
+
+      handle.addEventListener('pointermove', (event) => {
+        if (!dragging) return;
+        applyContentWidth(startWidth + sign * (event.clientX - startX) * 2, false);
+      });
+
+      const stop = (event) => {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        try {
+          handle.releasePointerCapture(event.pointerId);
+        } catch {
+          /* pointer already released */
+        }
+        api.updateSettings({ editWidth: state.editWidth });
+      };
+
+      handle.addEventListener('pointerup', stop);
+      handle.addEventListener('pointercancel', stop);
+
+      handle.addEventListener('dblclick', () => {
+        applyContentWidth(DEFAULT_WIDTH);
+        setStatus(t('status.widthReset'));
+      });
+    };
+
+    bind(el.editHandle, -1);
+    bind(el.editHandleRight, 1);
   }
 
   /* -------------------------------------------------------------- splitter */
@@ -1099,7 +1192,10 @@
       restoreEditorFocus();
     });
     el.resetWidth.addEventListener('click', () => {
-      applyContentWidth(DEFAULT_WIDTH);
+      state.contentWidth = DEFAULT_WIDTH;
+      state.editWidth = DEFAULT_WIDTH;
+      api.updateSettings({ contentWidth: DEFAULT_WIDTH, editWidth: DEFAULT_WIDTH });
+      applyContentWidth(DEFAULT_WIDTH, false);
       setStatus(t('status.widthReset'));
     });
     el.language.addEventListener('change', handleLanguageChange);
@@ -1129,6 +1225,7 @@
     applyTheme(settings.theme === 'light' ? 'light' : 'dark', false);
     applyTextSize(Number(settings.textSize) || DEFAULT_TEXT_SIZE, false);
     applyContentWidth(Number(settings.contentWidth) || DEFAULT_WIDTH, false);
+    state.editWidth = Number(settings.editWidth) || DEFAULT_WIDTH;
     applySplit(Number(settings.splitRatio) || DEFAULT_SPLIT, false);
     setMode(settings.mode || 'view', false);
     applyZoom(Number(settings.zoom) || 1, false);
@@ -1160,6 +1257,7 @@
     setupGlobalKeys();
     setupDragAndDrop();
     setupWidthHandle();
+    setupEditHandle();
     setupSplitter();
     setupScrollSync();
     setupLinkHandling();

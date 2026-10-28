@@ -340,7 +340,7 @@ body {
   border-right: 0;
 }
 
-/* Spaltenkanten als Overlay, damit die Scrollleiste am Fensterrand bleibt. */
+/* Spaltenkante als Overlay: Textblock rechtsbündig, Scrollleiste am Fensterrand. */
 :root[data-mode="edit"] #editor-pane::after {
   content: "";
   position: absolute;
@@ -433,7 +433,8 @@ body {
   color: var(--text-faint);
 }
 
-/* Nur im reinen Bearbeiten-Modus: Textblock mittig, Scrollleiste am Fensterrand. */
+/* Nur im reinen Bearbeiten-Modus: Text endet vor dem rechten Rand,
+   die Scrollleiste bleibt aber ganz rechts am Fenster. */
 :root[data-mode="edit"] #editor,
 :root[data-mode="edit"] #editor-mirror {
   padding-right: calc(var(--edit-pad-right, 0px) + 24px);
@@ -473,17 +474,23 @@ body {
 
 #splitter {
   position: relative;
+  z-index: 8;
   flex: 0 0 1px;
   background: var(--border);
   cursor: col-resize;
   transition: background-color 120ms ease;
+  touch-action: none;
 }
 
-/* Größere Greiffläche, ohne eine zweite sichtbare Kante zu erzeugen. */
+/* Breite Greiffläche über den angrenzenden Bereichen (unsichtbar). */
 #splitter::after {
   content: "";
   position: absolute;
-  inset: 0 -4px;
+  top: 0;
+  bottom: 0;
+  left: -7px;
+  right: -7px;
+  cursor: col-resize;
 }
 
 #splitter:hover,
@@ -513,6 +520,17 @@ body {
   padding: 28px 26px 120px;
   border-left: 1px solid var(--column-line);
   border-right: 1px solid var(--column-line);
+}
+
+/* Split: Die Vorschau reicht immer bis zum rechten Rand, links ist die Trennlinie. */
+:root[data-mode="split"] #preview {
+  width: auto;
+  max-width: none;
+  margin: 0;
+  border-left: 0;
+  border-right: 0;
+  padding-left: 24px;
+  padding-right: 24px;
 }
 
 /* Der Griff markiert die rechte Spaltenkante und hebt sie beim Ziehen hervor. */
@@ -563,6 +581,67 @@ body {
 
 #width-handle:hover::after,
 #width-handle.dragging::after {
+  background: var(--accent);
+}
+
+/* Griffe für beide Kanten im Bearbeiten-Modus. */
+#edit-handle,
+#edit-handle-right {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 14px;
+  margin-left: -7px;
+  cursor: col-resize;
+  opacity: 0;
+  transition: opacity 140ms ease;
+  z-index: 6;
+  touch-action: none;
+}
+
+#edit-handle {
+  left: var(--edit-pad-left, 0px);
+}
+
+#edit-handle-right {
+  left: var(--edit-right-edge, 100%);
+}
+
+#edit-handle::after,
+#edit-handle-right::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 6px;
+  width: 2px;
+  height: 46px;
+  transform: translateY(-50%);
+  border-radius: 2px;
+  background: var(--border-strong);
+}
+
+#editor-pane:hover #edit-handle,
+#editor-pane:hover #edit-handle-right {
+  opacity: 0.7;
+}
+
+/* In der Bearbeitung dauerhaft leicht sichtbar, damit der Griff auffindbar ist. */
+:root[data-mode="edit"] #edit-handle,
+:root[data-mode="edit"] #edit-handle-right {
+  opacity: 0.4;
+}
+
+#edit-handle:hover,
+#edit-handle.dragging,
+#edit-handle-right:hover,
+#edit-handle-right.dragging {
+  opacity: 1;
+}
+
+#edit-handle:hover::after,
+#edit-handle.dragging::after,
+#edit-handle-right:hover::after,
+#edit-handle-right.dragging::after {
   background: var(--accent);
 }
 

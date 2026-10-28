@@ -20,6 +20,7 @@ const DEFAULT_SETTINGS = {
   mode: 'view',
   textSize: 17,
   contentWidth: 800,
+  editWidth: 800,
   splitRatio: 0.5,
   zoom: 1,
   bounds: null,

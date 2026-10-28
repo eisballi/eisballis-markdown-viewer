@@ -11,9 +11,9 @@ Standardmäßig startet die App im **Dark Mode** und im **Ansichtsmodus** – al
 | --- | --- |
 | Oberste Leiste | Öffnen · Speichern · Speichern unter · Ansicht · Bearbeiten · Geteilt · Textgröße ± · Hell/Dunkel · Nach Updates suchen · GitHub · eisballi.com · Sprache (EN/DE) |
 | Ansicht | Markdown gerendert (GFM: Tabellen, Aufgabenlisten, Code, Zitate) |
-| Bearbeiten | Texteditor mittig in der Textspaltenbreite, mit **Zeilennummern**; geänderte Zeilennummern sind **orange** markiert |
-| Geteilt | Editor links, Vorschau rechts – Trenner frei verschiebbar, **eine gemeinsame Scrollleiste** (beide Bereiche laufen parallel) |
-| Textbreite | Dünne Begrenzungslinien links und rechts der Textspalte; rechter Rand mit der Maus ziehbar, Doppelklick setzt zurück |
+| Bearbeiten | Texteditor mittig in der Textspaltenbreite, mit **Zeilennummern**; geänderte Zeilennummern sind **orange** markiert; Breite über die Griffe an beiden Kanten ziehbar |
+| Geteilt | Editor links, Vorschau rechts (Vorschau reicht bis zum Fensterrand) – die mittlere Trennlinie ist der Zieh-Griff für die Breite, beide Bereiche scrollen synchron |
+| Textbreite | Ansicht: rechter Rand der Textspalte ziehbar · Bearbeiten: beide Kanten · Doppelklick auf einen Griff setzt zurück |
 | Zoom | `Strg` + Mausrad zoomt die gesamte Oberfläche stufenlos (50–300 %) |
 | Textgröße | `A−` / `A+` bzw. `Strg` + `-` / `Strg` + `+`, unabhängig vom Zoom |
 | Dateien | Öffnen/Speichern/Speichern unter, Drag & Drop, „zuletzt geöffneter Ordner“ |
