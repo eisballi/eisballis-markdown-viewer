@@ -21,7 +21,7 @@ npm test           # unit + end-to-end tests
   one divider in split mode, one scrollbar per pane.
 * **No duplicated helpers.** Extend the existing function instead of adding a second one.
 * Add or update tests for behaviour changes (`test/unit` or `test/e2e`).
-* Keep user-facing text out of the code – add a key to both catalogs instead.
+* Keep user-facing text out of the code, add a key to both catalogs instead.
 
 ## Formatting
 

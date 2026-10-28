@@ -263,7 +263,7 @@ async function checkForUpdates({ owner, currentVersion, settings, appRoot }) {
     source: null,
     currentVersion,
     latestVersion: currentVersion,
-    notes: errors.join(' · '),
+    notes: errors.join(', '),
     asset: null,
     checkedAt: Date.now(),
   };

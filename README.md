@@ -1,7 +1,7 @@
 # Eisballi's Markdown Viewer
 
 A deliberately small Markdown viewer with a plain text editor for **Windows** and **Linux (Ubuntu)**.
-It starts in **dark mode** and **view mode**, so a document is readable right away – no clicking around.
+It starts in **dark mode** and **view mode**, so a document is readable right away, no clicking around.
 
 ![App icon](build/icons/256x256.png)
 
@@ -9,17 +9,17 @@ It starts in **dark mode** and **view mode**, so a document is readable right aw
 
 | Area | Details |
 | --- | --- |
-| Toolbar | Open · Save · Save as · View · Edit · Split · Text size ± · Light/dark · Check for updates · GitHub · eisballi.com · Language (EN/DE) |
+| Toolbar | Open, Save, Save as, View, Edit, Split, Text size ±, Light/dark, Check for updates, GitHub, eisballi.com, Language (EN/DE) |
 | View | Rendered Markdown (GFM: tables, task lists, code, quotes) |
 | Edit | Plain text editor centered in the text column with **line numbers**; changed line numbers are **orange**; width adjustable from both edges |
-| Split | Editor left, preview right (preview reaches the window edge) – the single divider is the drag handle for the width, both panes scroll together |
-| Text width | View: drag the right edge of the column · Edit: drag either edge · double-click a grip to reset |
-| Zoom | `Ctrl` + mouse wheel scales the document (text, images, spacing) from 50–300 %; the toolbar and the base font size stay unchanged |
+| Split | Editor left, preview right (preview reaches the window edge), the single divider is the drag handle for the width, both panes scroll together |
+| Text width | View: drag the right edge of the column, Edit: drag either edge, double-click a grip to reset |
+| Zoom | `Ctrl` + mouse wheel scales the document (text, images, spacing) from 50-300 %; the toolbar and the base font size stay unchanged |
 | Text size | `A−` / `A+` or `Ctrl` + `-` / `Ctrl` + `+` sets the base font size; zoom scales on top of it |
 | Files | Open, save, save as, drag & drop, remembers the last folder |
 | Language | Dropdown in the toolbar: **English (default)** or **Deutsch**, also available in the menu |
 | Updates | Checks GitHub releases **or** local git changes, asks before installing |
-| Default app | `.md`, `.markdown`, `.mdown` – the Windows installer and the Linux package register the association |
+| Default app | `.md`, `.markdown`, `.mdown`, the Windows installer and the Linux package register the association |
 
 Everything is stored locally (`config.json` in the user data directory): theme, language,
 text size, text width, split ratio, zoom and window bounds.
@@ -88,7 +88,7 @@ Replace that file and re-run the command to use a different app icon.
 
 The **Check for updates** button (and a silent check ~10 s after start) uses two sources:
 
-1. **GitHub releases** of the repository from `package.json` – when a newer release exists
+1. **GitHub releases** of the repository from `package.json`, when a newer release exists
    the app asks *"Version X is available … update now?"*. After the download the Windows
    setup runs silently, the app quits and restarts. On Linux the new AppImage or `.deb` is started.
 2. **Local git repository** (fallback, e.g. a developer checkout): runs `git fetch` and
@@ -115,7 +115,7 @@ These are expected and harmless:
   They come from **electron-builder's own dependencies** (development only) and are not
   part of the shipped app. They disappear once electron-builder updates its tree.
 * electron-builder logs “no node modules found in collection” because the app has no
-  runtime dependencies – `marked` and `DOMPurify` are vendored into `src/renderer/vendor/`.
+  runtime dependencies, `marked` and `DOMPurify` are vendored into `src/renderer/vendor/`.
 * “no code signing certificate configured” appears until a certificate is added; see
   [docs/RELEASE.md](docs/RELEASE.md).
 * For `node_modules`, remember to run `npm install` before `npm start`; `sync-vendor` is part of

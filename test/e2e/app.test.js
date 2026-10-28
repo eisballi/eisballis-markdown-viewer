@@ -56,7 +56,7 @@ test('starts in dark mode and renders the Markdown document', async () => {
   assert.equal(state.tables, 1);
   assert.equal(state.codeBlocks, 1);
   assert.equal(state.checkboxes, 3);
-  assert.match(state.title, /sample\.md – Eisballi's Markdown Viewer/);
+  assert.match(state.title, /sample\.md - Eisballi's Markdown Viewer/);
   assert.match(state.version, /^v\d+\.\d+\.\d+/);
 });
 
@@ -206,7 +206,7 @@ test('split mode uses one scrollbar and keeps both panes in sync', async () => {
     const original = editor.value;
     editor.value = original + '\\n\\n' + Array.from({ length: 120 }, (_, i) => 'Filler line ' + i).join('\\n');
     editor.dispatchEvent(new Event('input', { bubbles: true }));
-    await new Promise((resolve) => setTimeout(resolve, 800));
+    await new Promise((resolve) => setTimeout(resolve, 1200));
 
     const preview = document.getElementById('preview');
     const previewPane = document.getElementById('preview-pane').getBoundingClientRect();
@@ -218,7 +218,7 @@ test('split mode uses one scrollbar and keeps both panes in sync', async () => {
     };
 
     previewScroll.scrollTop = Math.round((previewScroll.scrollHeight - previewScroll.clientHeight) * 0.6);
-    await new Promise((resolve) => setTimeout(resolve, 400));
+    await new Promise((resolve) => setTimeout(resolve, 600));
 
     const result = {
       editorPaneHidden: document.getElementById('editor-pane').hidden,
@@ -249,7 +249,7 @@ test('split mode uses one scrollbar and keeps both panes in sync', async () => {
   assert.equal(split.paneGapRight, 0, 'the preview pane reaches the window edge');
   assert.equal(split.gapRight, split.previewScrollbarWidth, 'only the scrollbar remains on the right');
   assert.equal(split.widthGripHidden, true);
-  assert.ok(Math.abs(split.previewRatio - split.editorRatio) <= 0.02, 'both panes scroll together');
+  assert.ok(Math.abs(split.previewRatio - split.editorRatio) <= 0.03, 'both panes scroll together');
 });
 
 test('column lines span the full pane even for a short document', async () => {

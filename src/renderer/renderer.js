@@ -232,7 +232,7 @@
 
   function updateTitle() {
     const name = state.fileName || t('title.untitled');
-    const title = `${state.dirty ? '• ' : ''}${name} – Eisballi's Markdown Viewer`;
+    const title = `${state.dirty ? '• ' : ''}${name} - Eisballi's Markdown Viewer`;
     document.title = title;
     api.setTitle(title);
     el.statusFile.textContent = state.filePath || t('status.noFile');
@@ -976,7 +976,7 @@
     if (manual) {
       api.message({
         message: t('update.noSourceTitle'),
-        detail: t('update.noSourceDetail', { notes: result.notes || '—' }),
+        detail: t('update.noSourceDetail', { notes: result.notes || '-' }),
       });
     }
   }

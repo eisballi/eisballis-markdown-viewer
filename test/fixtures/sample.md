@@ -7,7 +7,7 @@ Welcome to **Eisballi's Markdown Viewer**. This file shows what the viewer can d
 Plain text with *italic*, **bold** and `inline code` sections.
 A [link to GitHub](https://github.com) opens in your default browser.
 
-> A block quote uses a colored bar – readable in dark and light mode.
+> A block quote uses a colored bar, readable in dark and light mode.
 
 ## Lists
 

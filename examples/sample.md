@@ -1,33 +1,33 @@
-# Beispiel-Dokument
+# Sample document
 
-Willkommen beim **Eisballi's Markdown Viewer**. Diese Datei zeigt, was der Viewer kann.
+Welcome to **Eisballi's Markdown Viewer**. This file shows what the viewer can do.
 
-## Text & Formatierung
+## Text and formatting
 
-Normaler Text mit *kursiven*, **fetten** und `Inline-Code`-Abschnitten.
-Ein [Link zu GitHub](https://github.com) öffnet sich im Standardbrowser.
+Plain text with *italic*, **bold** and `inline code` sections.
+A [link to GitHub](https://github.com) opens in your default browser.
 
-> Ein Zitat zeigt sich mit farbigem Balken – gut lesbar in Dark und Light.
+> A block quote uses a colored bar, readable in dark and light mode.
 
-## Listen
+## Lists
 
-- Ein Punkt
-- Noch ein Punkt
-  - Unterpunkt
-1. Erster Schritt
-2. Zweiter Schritt
+- One item
+- Another item
+  - Nested item
+1. First step
+2. Second step
 
-- [x] Ansicht prüfen
-- [ ] Eigene Datei öffnen
-- [ ] Textbreite mit dem Griff am rechten Rand ziehen
+- [x] Check the view
+- [ ] Open your own file
+- [ ] Drag the width grip
 
-## Tabelle
+## Table
 
-| Modus | Tastenkürzel | Beschreibung |
+| Mode | Shortcut | Description |
 | --- | --- | --- |
-| Ansicht | `Strg+1` | Nur gerendertes Markdown |
-| Bearbeiten | `Strg+2` | Nur Texteditor |
-| Geteilt | `Strg+3` | Editor links, Vorschau rechts |
+| View | `Ctrl+1` | Rendered Markdown only |
+| Edit | `Ctrl+2` | Plain text editor |
+| Split | `Ctrl+3` | Editor left, preview right |
 
 ## Code
 
@@ -37,15 +37,5 @@ const viewer = {
   mode: 'view',
   zoom: 1,
 };
-console.log('Hallo Markdown', viewer);
+console.log('Hello Markdown', viewer);
 ```
-
-## Bild
-
-![App-Icon](../build/icons/256x256.png)
-
-## Trennlinie
-
----
-
-Zuletzt geändert: heute.

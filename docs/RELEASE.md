@@ -49,7 +49,7 @@ The workflow `.github/workflows/release.yml` then:
 ## 4. Verify
 
 - Open the release on GitHub and check that all eight files are attached.
-- Install the previous version, start it and press **Check for updates** –
+- Install the previous version, start it and press **Check for updates**
   it must offer the new version and install it.
 - Download the stable links used on the website (`docs/WEBSITE-DOWNLOAD.md`).
 

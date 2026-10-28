@@ -112,7 +112,7 @@ async function waitForRenderer(evaluate, timeoutMs = 30000) {
  * Starts the real Electron app with an isolated profile and the given document.
  * The DevTools protocol is used for assertions, so the app runs unmodified.
  */
-async function launchApp(documentPath) {
+async function launchApp(documentPath, attempt = 1) {
   const port = await freePort();
   const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'eisballi-e2e-'));
 
@@ -128,7 +128,18 @@ async function launchApp(documentPath) {
   );
 
   const exited = new Promise((resolve) => child.once('exit', resolve));
-  const target = await waitForTarget(port);
+
+  let target;
+  try {
+    target = await waitForTarget(port);
+  } catch (error) {
+    // A stale instance or a busy port can swallow the first start, so try once more.
+    stop(child);
+    fs.rmSync(userDataDir, { recursive: true, force: true });
+    if (attempt >= 3) throw error;
+    return launchApp(documentPath, attempt + 1);
+  }
+
   const session = await connect(target.webSocketDebuggerUrl);
   await waitForRenderer(session.evaluate);
 
