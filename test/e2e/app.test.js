@@ -100,13 +100,14 @@ test('switching the language updates the UI and is persisted', async () => {
 test('view mode shows the column borders and the width grip', async () => {
   const view = await app.evaluate(`(() => {
     const preview = document.getElementById('preview');
-    const pane = document.getElementById('preview-pane').getBoundingClientRect();
+    const paneElement = document.getElementById('preview-pane');
+    const pane = paneElement.getBoundingClientRect();
     const column = preview.getBoundingClientRect();
-    const styles = getComputedStyle(preview);
+    const overlay = getComputedStyle(paneElement, '::after');
     const handle = document.getElementById('width-handle');
     return {
-      borderLeft: parseFloat(styles.borderLeftWidth),
-      borderRight: parseFloat(styles.borderRightWidth),
+      borderLeft: parseFloat(overlay.borderLeftWidth),
+      borderRight: parseFloat(overlay.borderRightWidth),
       columnWidth: Math.round(column.width),
       configuredWidth: parseInt(getComputedStyle(document.documentElement).getPropertyValue('--content-width'), 10),
       gapRight: Math.round(pane.right - column.right),
@@ -249,6 +250,77 @@ test('split mode uses one scrollbar and keeps both panes in sync', async () => {
   assert.equal(split.gapRight, split.previewScrollbarWidth, 'only the scrollbar remains on the right');
   assert.equal(split.widthGripHidden, true);
   assert.ok(Math.abs(split.previewRatio - split.editorRatio) <= 0.02, 'both panes scroll together');
+});
+
+test('column lines span the full pane even for a short document', async () => {
+  const lines = await app.evaluate(`(async () => {
+    const editor = document.getElementById('editor');
+    const original = editor.value;
+    editor.value = '# Short\\n\\nOnly a few lines.';
+    editor.dispatchEvent(new Event('input', { bubbles: true }));
+    document.querySelector('[data-mode="view"]').click();
+    await new Promise((resolve) => setTimeout(resolve, 600));
+
+    const pane = document.getElementById('preview-pane');
+    const preview = document.getElementById('preview');
+    const style = getComputedStyle(pane, '::after');
+    const result = {
+      paneHeight: Math.round(pane.getBoundingClientRect().height),
+      previewHeight: Math.round(preview.getBoundingClientRect().height),
+      borderLeft: parseFloat(style.borderLeftWidth),
+      borderRight: parseFloat(style.borderRightWidth),
+      top: style.top,
+      bottom: style.bottom,
+      leftVar: getComputedStyle(document.documentElement).getPropertyValue('--column-left').trim(),
+      rightVar: getComputedStyle(document.documentElement).getPropertyValue('--column-right').trim(),
+    };
+
+    editor.value = original;
+    editor.dispatchEvent(new Event('input', { bubbles: true }));
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    return result;
+  })()`);
+
+  assert.ok(lines.previewHeight < lines.paneHeight, 'the document is shorter than the pane');
+  assert.ok(lines.borderLeft > 0 && lines.borderRight > 0, 'both column lines are drawn');
+  assert.equal(lines.top, '0px');
+  assert.equal(lines.bottom, '0px');
+  assert.ok(parseInt(lines.leftVar, 10) > 0);
+  assert.ok(parseInt(lines.rightVar, 10) > 0);
+});
+
+test('zoom scales the document but keeps the base font size and the toolbar', async () => {
+  const zoom = await app.evaluate(`(async () => {
+    const toolbar = document.getElementById('toolbar');
+    const heading = document.querySelector('#preview h1');
+    const measure = () => ({
+      toolbarHeight: Math.round(toolbar.getBoundingClientRect().height),
+      buttonFont: getComputedStyle(document.getElementById('btn-open')).fontSize,
+      baseSize: getComputedStyle(document.documentElement).getPropertyValue('--md-size').trim(),
+      label: document.getElementById('font-size-label').textContent,
+      headingHeight: Math.round(heading.getBoundingClientRect().height),
+      zoom: document.getElementById('status-zoom').textContent,
+    });
+
+    const before = measure();
+    window.dispatchEvent(new WheelEvent('wheel', { deltaY: -120, ctrlKey: true, bubbles: true, cancelable: true }));
+    await new Promise((resolve) => setTimeout(resolve, 350));
+    const zoomed = measure();
+
+    window.dispatchEvent(new WheelEvent('wheel', { deltaY: 120, ctrlKey: true, bubbles: true, cancelable: true }));
+    await new Promise((resolve) => setTimeout(resolve, 350));
+    const restored = measure();
+
+    return { before, zoomed, restored };
+  })()`);
+
+  assert.notEqual(zoom.zoomed.zoom, zoom.before.zoom, 'the zoom indicator changes');
+  assert.ok(zoom.zoomed.headingHeight > zoom.before.headingHeight, 'the document is scaled up');
+  assert.equal(zoom.zoomed.baseSize, zoom.before.baseSize, 'the base font size stays untouched');
+  assert.equal(zoom.zoomed.label, zoom.before.label, 'the font size label stays untouched');
+  assert.equal(zoom.zoomed.toolbarHeight, zoom.before.toolbarHeight, 'the toolbar keeps its height');
+  assert.equal(zoom.zoomed.buttonFont, zoom.before.buttonFont, 'the toolbar keeps its font size');
+  assert.equal(zoom.restored.headingHeight, zoom.before.headingHeight, 'the zoom can be reset');
 });
 
 test('text size buttons change the rendered font size', async () => {

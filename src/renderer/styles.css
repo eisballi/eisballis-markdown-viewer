@@ -517,8 +517,21 @@ body {
   max-width: calc(100% - 24px);
   margin: 0 auto;
   padding: 28px 26px 120px;
+  zoom: var(--content-zoom, 1);
+}
+
+/* View mode: the column lines span the full pane, independent of document length. */
+:root[data-mode="view"] #preview-pane::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--column-left, 0px);
+  right: var(--column-right, 0px);
   border-left: 1px solid var(--column-line);
   border-right: 1px solid var(--column-line);
+  pointer-events: none;
+  z-index: 2;
 }
 
 /* Split: the preview always reaches the right edge, the divider is on the left. */
@@ -526,18 +539,16 @@ body {
   width: auto;
   max-width: none;
   margin: 0;
-  border-left: 0;
-  border-right: 0;
   padding-left: 24px;
   padding-right: 24px;
 }
 
 /* The grip marks the right column edge and highlights it while dragging. */
-#preview-pane:has(#width-handle:hover) #preview {
+#preview-pane:has(#width-handle:hover)::after {
   border-right-color: color-mix(in srgb, var(--accent) 55%, var(--column-line));
 }
 
-#preview-pane:has(#width-handle.dragging) #preview {
+#preview-pane:has(#width-handle.dragging)::after {
   border-right-color: var(--accent);
 }
 

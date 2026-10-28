@@ -19,7 +19,6 @@ contextBridge.exposeInMainWorld('api', {
   setTitle: (title) => ipcRenderer.send('window:set-title', title),
   forceClose: () => ipcRenderer.send('window:force-close'),
   quit: () => ipcRenderer.invoke('app:quit'),
-  zoom: (factor) => ipcRenderer.invoke('app:zoom', factor),
   setTheme: (theme) => ipcRenderer.invoke('theme:set', theme),
   confirm: (options) => ipcRenderer.invoke('dialog:confirm', options),
   message: (options) => ipcRenderer.invoke('dialog:message', options),

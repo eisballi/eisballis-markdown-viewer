@@ -370,11 +370,21 @@
     if (persist) api.updateSettings({ theme: state.theme });
   }
 
+  /**
+   * Zoom scales the document (text, images, spacing) while the font-size control sets
+   * the base text size. The toolbar keeps its own size.
+   */
+  function applyTypeMetrics() {
+    const editorSize = Math.round(state.textSize * 0.9 * state.zoom * 100) / 100;
+    document.documentElement.style.setProperty('--md-size', `${state.textSize}px`);
+    document.documentElement.style.setProperty('--editor-size', `${editorSize}px`);
+    document.documentElement.style.setProperty('--content-zoom', String(state.zoom));
+  }
+
   function applyTextSize(size, persist = true) {
     state.textSize = Math.min(MAX_TEXT_SIZE, Math.max(MIN_TEXT_SIZE, Math.round(size)));
-    document.documentElement.style.setProperty('--md-size', `${state.textSize}px`);
-    document.documentElement.style.setProperty('--editor-size', `${Math.round(state.textSize * 0.9)}px`);
     el.fontSizeLabel.textContent = String(state.textSize);
+    applyTypeMetrics();
     if (persist) api.updateSettings({ textSize: state.textSize });
     queueHandlePosition();
     scheduleGutter(60);
@@ -382,20 +392,24 @@
 
   function applyContentWidth(width, persist = true) {
     const editMode = state.mode === 'edit';
-    const paneWidth = editMode ? editorAvailableWidth() : el.previewPane.clientWidth || 800;
-    const reserve = editMode ? GUTTER_WIDTH + 24 : 24;
-    const max = Math.max(MIN_WIDTH, paneWidth - reserve);
-    const clamped = Math.min(max, Math.max(MIN_WIDTH, Math.round(width)));
 
     if (editMode) {
+      const paneWidth = editorAvailableWidth();
+      const max = Math.max(MIN_WIDTH, paneWidth - GUTTER_WIDTH - 24);
+      const clamped = Math.min(max, Math.max(MIN_WIDTH, Math.round(width)));
       state.editWidth = clamped;
       if (persist) api.updateSettings({ editWidth: clamped });
+      document.documentElement.style.setProperty('--content-width', `${clamped}px`);
     } else {
+      // The stored width is unzoomed (CSS px); the preview itself is zoomed.
+      const paneWidth = el.previewPane.clientWidth || 800;
+      const max = Math.max(MIN_WIDTH, paneWidth / state.zoom - 24);
+      const clamped = Math.min(max, Math.max(MIN_WIDTH, Math.round(width)));
       state.contentWidth = clamped;
       if (persist) api.updateSettings({ contentWidth: clamped });
+      document.documentElement.style.setProperty('--content-width', `${clamped}px`);
     }
 
-    document.documentElement.style.setProperty('--content-width', `${clamped}px`);
     queueHandlePosition();
     scheduleGutter(60);
   }
@@ -412,11 +426,12 @@
     scheduleGutter(60);
   }
 
-  async function applyZoom(factor, persist = true) {
-    const next = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.round(factor * 10) / 10));
-    const applied = await api.zoom(next);
-    state.zoom = applied || next;
+  function applyZoom(factor, persist = true) {
+    const next = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.round(factor * 100) / 100));
+    state.zoom = next;
     el.statusZoom.textContent = `${Math.round(state.zoom * 100)} %`;
+    applyTypeMetrics();
+    if (state.mode !== 'edit') applyContentWidth(state.contentWidth, false);
     if (persist) api.updateSettings({ zoom: state.zoom });
     queueHandlePosition();
     scheduleGutter(120);
@@ -563,7 +578,7 @@
 
   /* -------------------------------------------------------- width handle */
 
-  /** Positions the view-mode grip; edit-mode grips are placed by CSS variables. */
+  /** Positions the view-mode grip and the full-height column lines. */
   function positionWidthHandle() {
     if (state.mode === 'edit') {
       updateEditLayout();
@@ -577,6 +592,12 @@
       el.widthHandle.hidden = true;
       return;
     }
+
+    const left = Math.round(previewRect.left - paneRect.left);
+    const right = Math.round(paneRect.right - previewRect.right);
+    document.documentElement.style.setProperty('--column-left', `${left}px`);
+    document.documentElement.style.setProperty('--column-right', `${right}px`);
+
     el.widthHandle.hidden = false;
     el.widthHandle.style.left = `${previewRect.right - paneRect.left}px`;
   }
@@ -599,7 +620,7 @@
       if (event.button !== 0) return;
       dragging = true;
       startX = event.clientX;
-      startWidth = el.preview.getBoundingClientRect().width;
+      startWidth = parseFloat(getComputedStyle(el.preview).width) || state.contentWidth;
       el.widthHandle.classList.add('dragging');
       el.widthHandle.setPointerCapture(event.pointerId);
       event.preventDefault();
@@ -607,7 +628,7 @@
 
     el.widthHandle.addEventListener('pointermove', (event) => {
       if (!dragging) return;
-      const delta = (event.clientX - startX) * 2;
+      const delta = ((event.clientX - startX) * 2) / state.zoom;
       applyContentWidth(startWidth + delta, false);
     });
 

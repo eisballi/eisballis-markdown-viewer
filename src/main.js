@@ -400,16 +400,6 @@ function registerIpc() {
     if (mainWindow && !mainWindow.isDestroyed()) mainWindow.setTitle(title || APP_NAME);
   });
 
-  ipcMain.handle('app:zoom', (_event, factor) => {
-    if (!mainWindow || mainWindow.isDestroyed()) return 1;
-    const clamped = Math.min(3, Math.max(0.5, Number(factor) || 1));
-    mainWindow.webContents.setZoomFactor(clamped);
-    const applied = mainWindow.webContents.getZoomFactor();
-    settings.zoom = applied;
-    saveSettingsSoon();
-    return applied;
-  });
-
   ipcMain.handle('theme:set', (_event, theme) => {
     nativeTheme.themeSource = theme === 'light' ? 'light' : 'dark';
     return theme;

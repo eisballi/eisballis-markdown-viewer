@@ -14,8 +14,8 @@ It starts in **dark mode** and **view mode**, so a document is readable right aw
 | Edit | Plain text editor centered in the text column with **line numbers**; changed line numbers are **orange**; width adjustable from both edges |
 | Split | Editor left, preview right (preview reaches the window edge) – the single divider is the drag handle for the width, both panes scroll together |
 | Text width | View: drag the right edge of the column · Edit: drag either edge · double-click a grip to reset |
-| Zoom | `Ctrl` + mouse wheel zooms the whole UI continuously (50–300 %) |
-| Text size | `A−` / `A+` or `Ctrl` + `-` / `Ctrl` + `+`, independent of zoom |
+| Zoom | `Ctrl` + mouse wheel scales the document (text, images, spacing) from 50–300 %; the toolbar and the base font size stay unchanged |
+| Text size | `A−` / `A+` or `Ctrl` + `-` / `Ctrl` + `+` sets the base font size; zoom scales on top of it |
 | Files | Open, save, save as, drag & drop, remembers the last folder |
 | Language | Dropdown in the toolbar: **English (default)** or **Deutsch**, also available in the menu |
 | Updates | Checks GitHub releases **or** local git changes, asks before installing |
