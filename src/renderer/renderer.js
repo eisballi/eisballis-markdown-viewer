@@ -80,7 +80,7 @@
   let gutterTimer = null;
   let editPad = { left: -1, right: -1, rightEdge: -1 };
 
-  /* ------------------------------------------------------------------ i18n */
+  /* -------------------------------------------------------------- i18n */
 
   function t(key, vars) {
     const dict = STRINGS[state.language] || STRINGS.en || {};
@@ -105,9 +105,16 @@
 
     el.language.value = state.language;
     el.language.title = t('ui.language');
+    el.language.setAttribute('aria-label', t('ui.language'));
+    el.modeGroup.setAttribute('aria-label', t('ui.displayMode'));
     el.editor.placeholder = t('editor.placeholder');
     el.dropText.textContent = t('drop.text');
     el.hintCtrl.textContent = t('key.ctrl');
+    el.statusZoom.title = t('ui.zoomHint');
+    el.widthHandle.title = t('ui.widthHandle');
+    el.editHandle.title = t('ui.widthHandle');
+    el.editHandleRight.title = t('ui.widthHandle');
+    el.splitter.title = t('ui.splitter');
 
     el.open.title = `${t('app.open')} (Ctrl+O)`;
     el.save.title = `${t('app.save')} (Ctrl+S)`;
@@ -137,7 +144,7 @@
     if (persist) api.updateSettings({ language: state.language });
   }
 
-  /* ------------------------------------------------------------ rendering */
+  /* ----------------------------------------------------------- rendering */
 
   const slugCounts = new Map();
 
@@ -221,7 +228,7 @@
     el.emptyState.hidden = hasContent;
   }
 
-  /* ------------------------------------------------------------- file ops */
+  /* ------------------------------------------------------------ file ops */
 
   function updateTitle() {
     const name = state.fileName || t('title.untitled');
@@ -323,7 +330,7 @@
     }
   }
 
-  /* ---------------------------------------------------------------- status */
+  /* --------------------------------------------------------------- status */
 
   function setStatus(text, timeout = 5000) {
     clearTimeout(statusTimer);
@@ -349,7 +356,7 @@
     metaTimer = setTimeout(updateMeta, 300);
   }
 
-  /* ------------------------------------------------------------ appearance */
+  /* ----------------------------------------------------------- appearance */
 
   function updateThemeTitle() {
     el.theme.title = state.theme === 'dark' ? t('ui.theme.toLight') : t('ui.theme.toDark');
@@ -449,7 +456,7 @@
     scheduleGutter(30);
   }
 
-  /* ---------------------------------------------------------------- gutter */
+  /* --------------------------------------------------------------- gutter */
 
   function computeChangedLines(lines) {
     const counts = new Map();
@@ -487,7 +494,7 @@
         mirrorFragment.appendChild(node);
       }
       el.editorMirror.replaceChildren(mirrorFragment);
-      // Bruchgenaue Höhen (nicht gerundet), damit sich über viele Zeilen kein Versatz aufbaut.
+      // Measured (not rounded) heights keep many lines perfectly aligned.
       heights = Array.from(
         el.editorMirror.children,
         (node) => node.getBoundingClientRect().height,
@@ -519,20 +526,20 @@
       if (state.mode === 'view') return;
       updateEditLayout();
       renderGutter();
-      const before = `${editPad.left}:${editPad.right}:${editPad.rightEdge}`;
-      updateEditLayout();
-      if (`${editPad.left}:${editPad.right}:${editPad.rightEdge}` !== before) renderGutter();
+      // Changing the paddings changes the editor width, so measure once more.
+      if (updateEditLayout()) renderGutter();
     }, delay);
   }
 
   /**
-   * Bearbeiten-Modus: Textblock mittig (endet vor dem rechten Rand), Breite über
-   * beide Kanten einstellbar, Scrollleiste bleibt am Fensterrand.
+   * Edit mode: the text block stays centered (ending before the right edge) and its
+   * width can be changed from both edges while the scrollbar stays at the window edge.
+   * Returns true when the paddings changed.
    */
   function updateEditLayout() {
-    if (state.mode !== 'edit') return;
+    if (state.mode !== 'edit') return false;
     const pane = el.editorPane.clientWidth;
-    if (!pane) return;
+    if (!pane) return false;
 
     const scrollbar = Math.max(0, el.editor.offsetWidth - el.editor.clientWidth);
     const avail = Math.max(160, pane - scrollbar);
@@ -542,35 +549,27 @@
     const right = Math.round(free - left);
     const rightEdge = Math.round(left + GUTTER_WIDTH + width);
 
-    if (
-      left === editPad.left &&
-      right === editPad.right &&
-      rightEdge === editPad.rightEdge
-    ) {
-      return;
+    if (left === editPad.left && right === editPad.right && rightEdge === editPad.rightEdge) {
+      return false;
     }
+
     editPad = { left, right, rightEdge };
     document.documentElement.style.setProperty('--edit-pad-left', `${left}px`);
     document.documentElement.style.setProperty('--edit-pad-right', `${right}px`);
     document.documentElement.style.setProperty('--edit-scrollbar', `${scrollbar}px`);
     document.documentElement.style.setProperty('--edit-right-edge', `${rightEdge}px`);
+    return true;
   }
 
-  /* --------------------------------------------------------- width handle */
+  /* -------------------------------------------------------- width handle */
 
+  /** Positions the view-mode grip; edit-mode grips are placed by CSS variables. */
   function positionWidthHandle() {
-    const editMode = state.mode === 'edit';
-    el.editHandle.hidden = !editMode;
-    el.editHandleRight.hidden = !editMode;
-
-    if (editMode) {
-      el.widthHandle.hidden = true;
+    if (state.mode === 'edit') {
       updateEditLayout();
       return;
     }
-
-    el.widthHandle.hidden = state.mode === 'split';
-    if (state.mode === 'split') return;
+    if (state.mode !== 'view') return;
 
     const previewRect = el.preview.getBoundingClientRect();
     const paneRect = el.previewPane.getBoundingClientRect();
@@ -582,14 +581,13 @@
     el.widthHandle.style.left = `${previewRect.right - paneRect.left}px`;
   }
 
+  /** Runs after layout work and once more on the next frame. */
   function queueHandlePosition(delay = 0) {
-    const run = () => positionWidthHandle();
     requestAnimationFrame(() => {
-      run();
-      requestAnimationFrame(run);
+      positionWidthHandle();
+      requestAnimationFrame(positionWidthHandle);
     });
-    setTimeout(run, 16);
-    if (delay) setTimeout(run, delay);
+    if (delay) setTimeout(positionWidthHandle, delay);
   }
 
   function setupWidthHandle() {
@@ -634,7 +632,7 @@
     });
   }
 
-  /** Linke Kante im Bearbeiten-Modus: Breite wächst nach links. */
+  /** Edit mode edge grips: dragging either side changes the column width. */
   function setupEditHandle() {
     const bind = (handle, sign) => {
       let dragging = false;
@@ -681,7 +679,7 @@
     bind(el.editHandleRight, 1);
   }
 
-  /* -------------------------------------------------------------- splitter */
+  /* ------------------------------------------------------------- splitter */
 
   function scrollRatio(element) {
     const max = element.scrollHeight - element.clientHeight;
@@ -763,7 +761,7 @@
     el.splitter.addEventListener('pointercancel', stop);
   }
 
-  /* ------------------------------------------------------------------ links */
+  /* ----------------------------------------------------------------- links */
 
   function pathSeparator() {
     return state.appInfo.platform === 'win32' ? '\\' : '/';
@@ -810,7 +808,7 @@
     });
   }
 
-  /* ---------------------------------------------------------------- updates */
+  /* --------------------------------------------------------------- updates */
 
   function showUpdateBadge(show) {
     el.updateBadge.hidden = !show;
@@ -962,7 +960,7 @@
     }
   }
 
-  /* --------------------------------------------------------------- dialogs */
+  /* -------------------------------------------------------------- dialogs */
 
   async function showAbout() {
     await api.message({
@@ -981,7 +979,7 @@
     restoreEditorFocus();
   }
 
-  /* ------------------------------------------------------------ key events */
+  /* ----------------------------------------------------------- key events */
 
   function insertText(text) {
     const { selectionStart, selectionEnd, value } = el.editor;
@@ -1060,7 +1058,7 @@
     });
   }
 
-  /* ------------------------------------------------------------ drag & drop */
+  /* ----------------------------------------------------------- drag & drop */
 
   function setupDragAndDrop() {
     let depth = 0;
@@ -1093,7 +1091,7 @@
     });
   }
 
-  /* ---------------------------------------------------------------- commands */
+  /* --------------------------------------------------------------- commands */
 
   function setupCommands() {
     api.onCommand(async (command) => {
@@ -1172,7 +1170,7 @@
     });
   }
 
-  /* ---------------------------------------------------------------- wiring */
+  /* --------------------------------------------------------------- wiring */
 
   function setupToolbar() {
     el.open.addEventListener('click', () => openFile());

@@ -1,13 +1,13 @@
 'use strict';
 
 /**
- * Update-Prüfung ohne zusätzliche Abhängigkeiten.
+ * Update check without third-party dependencies.
  *
- * Zwei Quellen:
- *  1. GitHub-Releases (bevorzugt): vergleicht die installierte Version mit dem
- *     neuesten Release und lädt bei Bedarf den passenden Installer.
- *  2. Lokales Git-Repository (Fallback, z. B. im Entwickler-Checkout):
- *     erkennt neue Commits gegenüber dem Upstream-Branch.
+ * Two sources:
+ *  1. GitHub releases (preferred): compares the installed version with the latest
+ *     release and downloads the matching installer when needed.
+ *  2. Local git repository (fallback, e.g. a developer checkout): reports new
+ *     commits compared to the upstream branch.
  */
 
 const { app, shell } = require('electron');
@@ -101,7 +101,7 @@ function httpGet(url, headers = {}, redirects = 0) {
         response.on('end', () => resolve({ status, body, url }));
       },
     );
-    request.setTimeout(REQUEST_TIMEOUT, () => request.destroy(new Error('Zeitüberschreitung')));
+    request.setTimeout(REQUEST_TIMEOUT, () => request.destroy(new Error('Request timed out')));
     request.on('error', reject);
   });
 }
@@ -154,8 +154,8 @@ async function checkGithub(owner, currentVersion) {
 }
 
 /**
- * Fallback ohne API (z. B. wenn das GitHub-Rate-Limit greift): liest die
- * öffentliche Release-Seite und die dort verlinkten Downloads.
+ * Fallback without the API (e.g. when the GitHub rate limit is hit): reads the
+ * public release page and the downloads linked there.
  */
 async function checkGithubReleasePage(owner, currentVersion) {
   const pageUrl = `https://github.com/${owner}/releases/latest`;
@@ -181,7 +181,7 @@ async function checkGithubReleasePage(owner, currentVersion) {
   return buildResult({
     currentVersion,
     latestVersion,
-    notes: `Release ${latestVersion || '(unbekannt)'} – Quelle: Release-Seite`,
+    notes: '',
     htmlUrl: `https://github.com/${owner}/releases/latest`,
     asset: asset
       ? {
@@ -230,9 +230,7 @@ async function checkGitRepository(appRoot, currentVersion, settings) {
     commitsBehind,
     repoPath: candidate,
     asset: null,
-    notes: hasChanges
-      ? `Im Repository ${commitsBehind} neue(r) Commit(s) gefunden.`
-      : 'Das lokale Repository ist aktuell.',
+    notes: '',
     checkedAt: Date.now(),
   };
 }
@@ -285,7 +283,7 @@ function download(url, destination, onProgress) {
         }
         if (response.statusCode !== 200) {
           response.resume();
-          reject(new Error(`Download fehlgeschlagen (HTTP ${response.statusCode})`));
+          reject(new Error(`Download failed (HTTP ${response.statusCode})`));
           return;
         }
 
@@ -302,7 +300,7 @@ function download(url, destination, onProgress) {
         file.on('error', reject);
       },
     );
-    request.setTimeout(REQUEST_TIMEOUT, () => request.destroy(new Error('Zeitüberschreitung')));
+    request.setTimeout(REQUEST_TIMEOUT, () => request.destroy(new Error('Request timed out')));
     request.on('error', reject);
   });
 }
@@ -317,7 +315,7 @@ async function launchWindowsInstaller(installerPath) {
   const exeToRelaunch = app.getPath('exe');
   const quote = (value) => `'${String(value).replace(/'/g, "''")}'`;
   const script = [
-    // Der App genug Zeit geben, sich zu beenden, bevor Dateien ersetzt werden.
+    // Give the app time to exit before its files are replaced.
     'Start-Sleep -Milliseconds 2000',
     `Start-Process -FilePath ${quote(installerPath)} -ArgumentList '/S' -Wait`,
     'Start-Sleep -Milliseconds 1000',
@@ -339,7 +337,7 @@ async function launchLinuxUpdate(filePath, kind) {
 
   const runningAppImage = process.env.APPIMAGE;
   if (runningAppImage && runningAppImage.toLowerCase().endsWith('.appimage')) {
-    // Neue Version an die Stelle der laufenden AppImage kopieren und starten.
+    // Replace the running AppImage with the new build and start it.
     const script = [
       'sleep 3',
       `cp -f ${shellQuote(filePath)} ${shellQuote(runningAppImage)}`,
@@ -390,4 +388,4 @@ async function installUpdate({ payload, send }) {
   return { ok: true, filePath: target };
 }
 
-module.exports = { repoSlug, checkForUpdates, installUpdate, isNewer };
+module.exports = { repoSlug, checkForUpdates, installUpdate, isNewer, pickAsset, assetKind };

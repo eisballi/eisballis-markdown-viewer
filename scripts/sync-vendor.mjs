@@ -1,5 +1,5 @@
-// Kopiert die beiden Frontend-Abhängigkeiten in den Renderer-Ordner,
-// damit die App ohne Bundler und ohne node_modules im Paket läuft.
+// Copies the two renderer dependencies into the renderer folder so the app
+// runs without a bundler and without node_modules inside the package.
 import { copyFileSync, mkdirSync, existsSync, statSync } from 'node:fs';
 import path from 'node:path';
 
@@ -16,12 +16,12 @@ mkdirSync(outDir, { recursive: true });
 for (const file of files) {
   const source = path.join(root, file.from);
   try {
-    if (!existsSync(source)) throw new Error('fehlt');
+    if (!existsSync(source)) throw new Error('missing');
     copyFileSync(source, path.join(outDir, file.to));
     const kb = Math.round(statSync(source).size / 1024);
     console.log(`vendor: ${file.to} (${kb} KB)`);
   } catch {
-    console.error(`vendor: ${file.from} nicht gefunden – bitte zuerst "npm install" ausführen.`);
+    console.error(`vendor: ${file.from} not found - run "npm install" first.`);
     process.exit(1);
   }
 }

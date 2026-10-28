@@ -33,7 +33,12 @@ let rendererDirty = false;
 let allowClose = false;
 let pendingFilePath = null;
 
-function tr(key, vars) {
+/* ------------------------------------------------------------------ settings */
+
+const settingsPath = () => path.join(app.getPath('userData'), 'config.json');
+let settings = { ...DEFAULT_SETTINGS };
+
+function translate(key, vars) {
   const dict = STRINGS[settings.language] || STRINGS.en;
   let value = dict[key] !== undefined ? dict[key] : STRINGS.en[key];
   if (value === undefined) value = key;
@@ -44,11 +49,6 @@ function tr(key, vars) {
   }
   return value;
 }
-
-/* ------------------------------------------------------------------ settings */
-
-const settingsPath = () => path.join(app.getPath('userData'), 'config.json');
-let settings = { ...DEFAULT_SETTINGS };
 
 function loadSettings() {
   try {
@@ -78,10 +78,6 @@ function saveSettingsNow() {
 
 /* ------------------------------------------------------------------- helpers */
 
-function isMarkdownPath(filePath) {
-  return /\.(md|markdown|mdown|mkd|mkdn|mdtext)$/i.test(filePath);
-}
-
 function fileFromArgv(argv) {
   const args = argv.slice(app.isPackaged ? 1 : 2);
   for (const arg of args) {
@@ -98,22 +94,15 @@ function fileFromArgv(argv) {
 
 async function readMarkdownFile(filePath) {
   const stat = await fsp.stat(filePath);
-  if (!stat.isFile()) throw new Error('Kein gültige Datei.');
-  if (stat.size > MAX_FILE_SIZE) throw new Error('Die Datei ist größer als 20 MB und wird nicht geöffnet.');
+  if (!stat.isFile()) throw new Error(translate('error.notAFile'));
+  if (stat.size > MAX_FILE_SIZE) throw new Error(translate('error.tooLarge'));
   const content = await fsp.readFile(filePath, 'utf8');
   return {
     path: filePath,
-    dir: path.dirname(filePath),
     name: path.basename(filePath),
     baseUrl: pathToFileURL(filePath).href,
     content,
-    size: stat.size,
-    mtime: stat.mtimeMs,
   };
-}
-
-function toFileUrl(filePath) {
-  return pathToFileURL(filePath).href;
 }
 
 /* -------------------------------------------------------------------- window */
@@ -161,13 +150,17 @@ function createWindow() {
     event.preventDefault();
     const choice = dialog.showMessageBoxSync(win, {
       type: 'warning',
-      buttons: [tr('dialog.close.save'), tr('dialog.close.discard'), tr('dialog.close.cancel')],
+      buttons: [
+        translate('dialog.close.save'),
+        translate('dialog.close.discard'),
+        translate('dialog.close.cancel'),
+      ],
       defaultId: 0,
       cancelId: 2,
       noLink: true,
-      title: tr('dialog.close.title'),
-      message: tr('dialog.close.message'),
-      detail: tr('dialog.close.detail'),
+      title: translate('dialog.close.title'),
+      message: translate('dialog.close.message'),
+      detail: translate('dialog.close.detail'),
     });
     if (choice === 0) win.webContents.send('command', 'save-and-close');
     if (choice === 1) {
@@ -210,45 +203,65 @@ function buildMenu() {
   const language = settings.language === 'de' ? 'de' : 'en';
   const template = [
     {
-      label: tr('menu.file'),
+      label: translate('menu.file'),
       submenu: [
-        { label: tr('menu.open'), accelerator: 'CmdOrCtrl+O', click: () => sendCommand('open') },
-        { label: tr('menu.save'), accelerator: 'CmdOrCtrl+S', click: () => sendCommand('save') },
-        { label: tr('menu.saveAs'), accelerator: 'CmdOrCtrl+Shift+S', click: () => sendCommand('save-as') },
+        { label: translate('menu.open'), accelerator: 'CmdOrCtrl+O', click: () => sendCommand('open') },
+        { label: translate('menu.save'), accelerator: 'CmdOrCtrl+S', click: () => sendCommand('save') },
+        {
+          label: translate('menu.saveAs'),
+          accelerator: 'CmdOrCtrl+Shift+S',
+          click: () => sendCommand('save-as'),
+        },
         { type: 'separator' },
-        { label: tr('menu.reveal'), click: () => sendCommand('reveal') },
+        { label: translate('menu.reveal'), click: () => sendCommand('reveal') },
         { type: 'separator' },
-        { label: tr('menu.quit'), role: 'quit' },
+        { label: translate('menu.quit'), role: 'quit' },
       ],
     },
     {
-      label: tr('menu.edit'),
+      label: translate('menu.edit'),
       submenu: [
-        { role: 'undo', label: tr('menu.undo') },
-        { role: 'redo', label: tr('menu.redo') },
+        { role: 'undo', label: translate('menu.undo') },
+        { role: 'redo', label: translate('menu.redo') },
         { type: 'separator' },
-        { role: 'cut', label: tr('menu.cut') },
-        { role: 'copy', label: tr('menu.copy') },
-        { role: 'paste', label: tr('menu.paste') },
-        { role: 'selectAll', label: tr('menu.selectAll') },
+        { role: 'cut', label: translate('menu.cut') },
+        { role: 'copy', label: translate('menu.copy') },
+        { role: 'paste', label: translate('menu.paste') },
+        { role: 'selectAll', label: translate('menu.selectAll') },
       ],
     },
     {
-      label: tr('menu.view'),
+      label: translate('menu.view'),
       submenu: [
-        { label: tr('menu.modeView'), accelerator: 'CmdOrCtrl+1', click: () => sendCommand('mode-view') },
-        { label: tr('menu.modeEdit'), accelerator: 'CmdOrCtrl+2', click: () => sendCommand('mode-edit') },
-        { label: tr('menu.modeSplit'), accelerator: 'CmdOrCtrl+3', click: () => sendCommand('mode-split') },
+        {
+          label: translate('menu.modeView'),
+          accelerator: 'CmdOrCtrl+1',
+          click: () => sendCommand('mode-view'),
+        },
+        {
+          label: translate('menu.modeEdit'),
+          accelerator: 'CmdOrCtrl+2',
+          click: () => sendCommand('mode-edit'),
+        },
+        {
+          label: translate('menu.modeSplit'),
+          accelerator: 'CmdOrCtrl+3',
+          click: () => sendCommand('mode-split'),
+        },
         { type: 'separator' },
-        { label: tr('menu.textLarger'), click: () => sendCommand('font-inc') },
-        { label: tr('menu.textSmaller'), click: () => sendCommand('font-dec') },
-        { label: tr('menu.textReset'), click: () => sendCommand('font-reset') },
+        { label: translate('menu.textLarger'), click: () => sendCommand('font-inc') },
+        { label: translate('menu.textSmaller'), click: () => sendCommand('font-dec') },
+        { label: translate('menu.textReset'), click: () => sendCommand('font-reset') },
         { type: 'separator' },
-        { label: tr('menu.zoomReset'), click: () => sendCommand('zoom-reset') },
-        { label: tr('menu.theme'), accelerator: 'CmdOrCtrl+D', click: () => sendCommand('toggle-theme') },
+        { label: translate('menu.zoomReset'), click: () => sendCommand('zoom-reset') },
+        {
+          label: translate('menu.theme'),
+          accelerator: 'CmdOrCtrl+D',
+          click: () => sendCommand('toggle-theme'),
+        },
         { type: 'separator' },
         {
-          label: tr('menu.language'),
+          label: translate('menu.language'),
           submenu: [
             {
               label: 'English',
@@ -265,20 +278,20 @@ function buildMenu() {
           ],
         },
         { type: 'separator' },
-        { role: 'togglefullscreen', label: tr('menu.fullscreen') },
-        { role: 'reload', label: tr('menu.reload') },
-        ...(isDev ? [{ role: 'toggleDevTools', label: tr('menu.devtools') }] : []),
+        { role: 'togglefullscreen', label: translate('menu.fullscreen') },
+        { role: 'reload', label: translate('menu.reload') },
+        ...(isDev ? [{ role: 'toggleDevTools', label: translate('menu.devtools') }] : []),
       ],
     },
     {
-      label: tr('menu.help'),
+      label: translate('menu.help'),
       submenu: [
-        { label: tr('menu.checkUpdates'), click: () => sendCommand('check-updates') },
+        { label: translate('menu.checkUpdates'), click: () => sendCommand('check-updates') },
         { type: 'separator' },
-        { label: tr('menu.github'), click: () => sendCommand('github') },
-        { label: tr('menu.website'), click: () => sendCommand('website') },
+        { label: translate('menu.github'), click: () => sendCommand('github') },
+        { label: translate('menu.website'), click: () => sendCommand('website') },
         { type: 'separator' },
-        { label: tr('menu.about'), click: () => sendCommand('about') },
+        { label: translate('menu.about'), click: () => sendCommand('about') },
       ],
     },
   ];
@@ -308,7 +321,7 @@ function registerIpc() {
     if (!patch || typeof patch !== 'object') return settings;
     const previousLanguage = settings.language;
     const next = { ...settings, ...patch };
-    next.bounds = settings.bounds; // window bounds are managed by the main process only
+    next.bounds = settings.bounds; // window bounds are owned by the main process
     next.language = next.language === 'de' ? 'de' : 'en';
     settings = next;
     saveSettingsSoon();
@@ -320,13 +333,16 @@ function registerIpc() {
     let target = filePath;
     if (!target) {
       const result = await dialog.showOpenDialog(mainWindow, {
-        title: 'Markdown-Datei öffnen',
+        title: translate('dialog.openTitle'),
         defaultPath: settings.lastDir || app.getPath('documents'),
         properties: ['openFile'],
         filters: [
-          { name: 'Markdown', extensions: ['md', 'markdown', 'mdown', 'mkd', 'mkdn'] },
-          { name: 'Textdateien', extensions: ['txt'] },
-          { name: 'Alle Dateien', extensions: ['*'] },
+          {
+            name: translate('filter.markdown'),
+            extensions: ['md', 'markdown', 'mdown', 'mkd', 'mkdn'],
+          },
+          { name: translate('filter.text'), extensions: ['txt'] },
+          { name: translate('filter.all'), extensions: ['*'] },
         ],
       });
       if (result.canceled || !result.filePaths.length) return null;
@@ -338,48 +354,41 @@ function registerIpc() {
     return file;
   });
 
-  ipcMain.handle('file:reload', async (_event, filePath) => {
-    if (!filePath) return null;
-    return readMarkdownFile(filePath);
-  });
-
-  ipcMain.handle('file:save', async (_event, { filePath, content }) => {
+  ipcMain.handle('file:save', async (_event, options) => {
+    const { filePath, content } = options || {};
     if (!filePath) return null;
     await fsp.writeFile(filePath, String(content ?? ''), 'utf8');
-    const stat = await fsp.stat(filePath);
-    return { path: filePath, name: path.basename(filePath), size: stat.size, mtime: stat.mtimeMs };
+    return { path: filePath, name: path.basename(filePath) };
   });
 
-  ipcMain.handle('file:save-as', async (_event, { content, suggestedName }) => {
+  ipcMain.handle('file:save-as', async (_event, options) => {
+    const { content, suggestedName } = options || {};
     const result = await dialog.showSaveDialog(mainWindow, {
-      title: 'Speichern unter',
-      defaultPath: path.join(settings.lastDir || app.getPath('documents'), suggestedName || 'unbenannt.md'),
+      title: translate('dialog.saveTitle'),
+      defaultPath: path.join(
+        settings.lastDir || app.getPath('documents'),
+        suggestedName || 'untitled.md',
+      ),
       filters: [
-        { name: 'Markdown', extensions: ['md'] },
-        { name: 'Textdateien', extensions: ['txt'] },
-        { name: 'Alle Dateien', extensions: ['*'] },
+        { name: translate('filter.markdown'), extensions: ['md'] },
+        { name: translate('filter.text'), extensions: ['txt'] },
+        { name: translate('filter.all'), extensions: ['*'] },
       ],
     });
     if (result.canceled || !result.filePath) return null;
     await fsp.writeFile(result.filePath, String(content ?? ''), 'utf8');
     settings.lastDir = path.dirname(result.filePath);
     saveSettingsSoon();
-    const stat = await fsp.stat(result.filePath);
     return {
       path: result.filePath,
       name: path.basename(result.filePath),
       baseUrl: pathToFileURL(result.filePath).href,
-      dir: path.dirname(result.filePath),
-      size: stat.size,
-      mtime: stat.mtimeMs,
     };
   });
 
   ipcMain.on('state:dirty', (_event, dirty) => {
     rendererDirty = Boolean(dirty);
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.setDocumentEdited?.(rendererDirty);
-    }
+    if (mainWindow && !mainWindow.isDestroyed()) mainWindow.setDocumentEdited?.(rendererDirty);
   });
 
   ipcMain.on('window:force-close', () => {
@@ -411,7 +420,7 @@ function registerIpc() {
     const buttons =
       Array.isArray(config.buttons) && config.buttons.length
         ? config.buttons
-        : [config.confirmLabel || 'OK', config.cancelLabel || 'Abbrechen'];
+        : [translate('dialog.button.save'), translate('dialog.button.cancel')];
     const result = await dialog.showMessageBox(mainWindow, {
       type: 'question',
       buttons,
@@ -424,13 +433,14 @@ function registerIpc() {
     return result.response;
   });
 
-  ipcMain.handle('dialog:message', async (_event, { message, detail, type }) => {
+  ipcMain.handle('dialog:message', async (_event, options) => {
+    const config = options || {};
     await dialog.showMessageBox(mainWindow, {
-      type: type || 'info',
+      type: config.type || 'info',
       buttons: ['OK'],
       noLink: true,
-      message: message || '',
-      detail: detail || '',
+      message: config.message || '',
+      detail: config.detail || '',
     });
     return true;
   });
@@ -452,17 +462,15 @@ function registerIpc() {
     return true;
   });
 
-  ipcMain.handle('file:url', (_event, filePath) => toFileUrl(filePath));
-
-  ipcMain.handle('update:check', async (_event, options) => {
-    return updater.checkForUpdates({
+  ipcMain.handle('update:check', (_event, options) =>
+    updater.checkForUpdates({
       owner: updater.repoSlug(),
       currentVersion: app.getVersion(),
       settings,
       appRoot: path.join(__dirname, '..'),
       force: Boolean(options && options.force),
-    });
-  });
+    }),
+  );
 
   ipcMain.handle('update:install', async (event, payload) => {
     const send = (data) => {
@@ -496,6 +504,9 @@ if (!gotLock) {
 
   app.whenReady().then(() => {
     app.setAppUserModelId('de.eisballi.markdownviewer');
+    if (process.env.EISBALLI_USER_DATA) {
+      app.setPath('userData', path.resolve(process.env.EISBALLI_USER_DATA));
+    }
     loadSettings();
     nativeTheme.themeSource = settings.theme === 'light' ? 'light' : 'dark';
     pendingFilePath = fileFromArgv(process.argv);
@@ -511,7 +522,6 @@ if (!gotLock) {
             currentVersion: app.getVersion(),
             settings,
             appRoot: path.join(__dirname, '..'),
-            silent: true,
           });
           if (result && result.status === 'update' && mainWindow) {
             mainWindow.webContents.send('update:available', result);

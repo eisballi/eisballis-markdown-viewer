@@ -1,4 +1,4 @@
-name: Build
+name: Release
 
 on:
   push:
@@ -10,7 +10,21 @@ permissions:
   contents: write
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: xvfb-run --auto-servernum npm test
+        env:
+          CI: "true"
+
   windows:
+    needs: test
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,16 +32,26 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
+      - run: npm ci --no-audit --no-fund
       - run: npm run dist:win
+
+      - name: Prepare stable file names
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path stable | Out-Null
+          Copy-Item release/Eisballis-Markdown-Viewer-Setup-*.exe stable/Eisballis-Markdown-Viewer-Setup.exe
+          Copy-Item release/Eisballis-Markdown-Viewer-*-portable.exe stable/Eisballis-Markdown-Viewer-portable.exe
+
       - uses: actions/upload-artifact@v4
         with:
           name: windows
           path: |
             release/*.exe
+            stable/*.exe
           if-no-files-found: error
 
   linux:
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -35,17 +59,25 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
+      - run: npm ci --no-audit --no-fund
       - run: npm run dist:linux
+
+      - name: Prepare stable file names
+        run: |
+          mkdir -p stable
+          cp release/*.AppImage stable/Eisballis-Markdown-Viewer-x86_64.AppImage
+          cp release/*.deb stable/Eisballis-Markdown-Viewer-amd64.deb
+
       - uses: actions/upload-artifact@v4
         with:
           name: linux
           path: |
             release/*.AppImage
             release/*.deb
+            stable/*
           if-no-files-found: error
 
-  release:
+  publish:
     if: startsWith(github.ref, 'refs/tags/v')
     needs: [windows, linux]
     runs-on: ubuntu-latest
@@ -53,6 +85,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
+
       - uses: softprops/action-gh-release@v2
         with:
           files: |

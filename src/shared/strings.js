@@ -1,6 +1,8 @@
 /**
- * Zentrale UI-Texte für Renderer und Hauptprozess.
- * Standardsprache ist Englisch ("en"), Deutsch ist umschaltbar ("de").
+ * All user-facing UI strings.
+ *
+ * English is the default language. German is the only translation and is the
+ * single place where German text is expected in this code base.
  */
 (function (root, factory) {
   const strings = factory();
@@ -12,12 +14,10 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   const en = {
     'lang.name': 'English',
-    'lang.next': 'Switch to German',
 
     'app.open': 'Open',
     'app.save': 'Save',
     'app.saveAs': 'Save as',
-    'app.reveal': 'Show file in folder',
 
     'mode.view': 'View',
     'mode.edit': 'Edit',
@@ -25,7 +25,6 @@
 
     'ui.textSmaller': 'Smaller text (Ctrl+-)',
     'ui.textLarger': 'Larger text (Ctrl++)',
-    'ui.theme': 'Toggle light / dark (Ctrl+D)',
     'ui.theme.toLight': 'Switch to light mode (Ctrl+D)',
     'ui.theme.toDark': 'Switch to dark mode (Ctrl+D)',
     'ui.resetWidth': 'Reset text width',
@@ -35,6 +34,10 @@
     'ui.language': 'Language',
     'ui.about': 'About & shortcuts',
     'ui.textSize': 'Current text size',
+    'ui.displayMode': 'Display mode',
+    'ui.zoomHint': 'Zoom – change with Ctrl + mouse wheel',
+    'ui.widthHandle': 'Drag to change text width · Double-click to reset',
+    'ui.splitter': 'Drag to resize the panes',
 
     'status.ready': 'Ready',
     'status.opened': 'Opened: {name}',
@@ -53,52 +56,56 @@
     'status.updateDownloaded': 'Update downloaded',
     'status.repoChanges': 'Repository changes: {count} new commit(s)',
     'status.widthReset': 'Text width reset',
-    'status.fileError': 'File could not be opened',
+    'status.fileError': 'The file could not be opened',
 
     'empty.title': 'No file open',
     'empty.hint1': 'Press',
     'empty.hint2': 'to open a file — or drop a',
     'empty.hint3': 'file here.',
-    'key.ctrl': 'Ctrl',
     'drop.text': 'Drop a file here to open it',
     'title.untitled': 'Untitled',
-    'dialog.button.open': 'Open',
-    'dialog.button.later': 'Later',
-    'dialog.button.openFolder': 'Open folder',
-    'dialog.button.openRelease': 'Open release page',
-    'dialog.button.updateNow': 'Update now',
-    'dialog.fileOpenFailed': 'The file could not be opened',
-
     'editor.placeholder': '# Your heading\n\nWrite Markdown here…',
+    'key.ctrl': 'Ctrl',
 
     'dialog.unsaved.title': 'Unsaved changes',
     'dialog.unsaved.detail': 'The current document has unsaved changes. Save before “{action}”?',
+    'dialog.button.open': 'Open',
     'dialog.button.save': 'Save',
     'dialog.button.discard': 'Discard',
     'dialog.button.cancel': 'Cancel',
     'dialog.button.close': 'Close',
-    'dialog.button.ok': 'OK',
     'dialog.saveFailed': 'Saving failed',
+    'dialog.noFileOpen': 'No file is open.',
     'dialog.close.title': 'Unsaved changes',
     'dialog.close.message': 'The document has unsaved changes.',
     'dialog.close.detail': 'Do you want to save before closing?',
     'dialog.close.save': 'Save and close',
     'dialog.close.discard': 'Close without saving',
     'dialog.close.cancel': 'Cancel',
-    'dialog.noFileOpen': 'No file is open.',
+    'dialog.openTitle': 'Open Markdown file',
+    'dialog.saveTitle': 'Save as',
+
+    'filter.markdown': 'Markdown',
+    'filter.text': 'Text files',
+    'filter.all': 'All files',
+
+    'error.notAFile': 'This is not a valid file.',
+    'error.tooLarge': 'The file is larger than 20 MB and cannot be opened.',
 
     'about.title': "Eisballi's Markdown Viewer {version}",
     'about.detail': 'Platform: {platform}\n\nShortcuts:\n{shortcuts}',
     'about.shortcuts':
-      'Ctrl+O  Open\nCtrl+S  Save\nCtrl+Shift+S  Save as\nCtrl+1 / Ctrl+2 / Ctrl+3  View / Edit / Split\nCtrl+D  Light/dark\nCtrl + mouse wheel  Zoom\nCtrl + + / -  Text size\nDouble-click the width grip  Reset text width',
+      'Ctrl+O  Open\nCtrl+S  Save\nCtrl+Shift+S  Save as\nCtrl+1 / Ctrl+2 / Ctrl+3  View / Edit / Split\nCtrl+D  Light/dark\nCtrl + mouse wheel  Zoom\nCtrl + + / -  Text size\nDouble-click a width grip  Reset text width',
 
     'update.availableMessage': 'Version {latest} is available (installed: {current}).',
-    'update.availableDetail': 'Do you want to update now? The app will close and restart after installation.',
+    'update.availableDetail':
+      'Do you want to update now? The app will close and restart after installation.',
     'update.published': 'Published: {date}',
     'update.now': 'Update now',
     'update.later': 'Later',
     'update.repoChangesTitle': 'There are changes in the code repository.',
-    'update.repoChangesDetail': '{notes}\n\nNo ready installer is available. Open the repository folder to build it?',
+    'update.repoChangesDetail':
+      '{notes}\n\nNo ready installer is available. Open the repository folder to build it?',
     'update.openFolder': 'Open folder',
     'update.noAssetTitle': 'No installer available for this update.',
     'update.noAssetDetail':
@@ -152,12 +159,10 @@
 
   const de = {
     'lang.name': 'Deutsch',
-    'lang.next': 'Auf Englisch umschalten',
 
     'app.open': 'Öffnen',
     'app.save': 'Speichern',
     'app.saveAs': 'Speichern unter',
-    'app.reveal': 'Datei im Ordner anzeigen',
 
     'mode.view': 'Ansicht',
     'mode.edit': 'Bearbeiten',
@@ -165,7 +170,6 @@
 
     'ui.textSmaller': 'Text kleiner (Strg+-)',
     'ui.textLarger': 'Text größer (Strg++)',
-    'ui.theme': 'Hell / Dunkel (Strg+D)',
     'ui.theme.toLight': 'Zu hellem Modus wechseln (Strg+D)',
     'ui.theme.toDark': 'Zu dunklem Modus wechseln (Strg+D)',
     'ui.resetWidth': 'Textbreite zurücksetzen',
@@ -175,6 +179,10 @@
     'ui.language': 'Sprache',
     'ui.about': 'Über & Tastenkürzel',
     'ui.textSize': 'Aktuelle Textgröße',
+    'ui.displayMode': 'Anzeigemodus',
+    'ui.zoomHint': 'Zoom – mit Strg + Mausrad ändern',
+    'ui.widthHandle': 'Ziehen: Textbreite · Doppelklick: zurücksetzen',
+    'ui.splitter': 'Ziehen: Bereiche skalieren',
 
     'status.ready': 'Bereit',
     'status.opened': 'Geöffnet: {name}',
@@ -193,44 +201,46 @@
     'status.updateDownloaded': 'Update heruntergeladen',
     'status.repoChanges': 'Repo-Änderungen: {count} neue(r) Commit(s)',
     'status.widthReset': 'Textbreite zurückgesetzt',
-    'status.fileError': 'Datei konnte nicht geöffnet werden',
+    'status.fileError': 'Die Datei konnte nicht geöffnet werden',
 
     'empty.title': 'Keine Datei geöffnet',
     'empty.hint1': 'Mit',
     'empty.hint2': 'eine Datei öffnen — oder eine',
     'empty.hint3': 'Datei hierher ziehen.',
-    'key.ctrl': 'Strg',
     'drop.text': 'Datei hier ablegen zum Öffnen',
     'title.untitled': 'Unbenannt',
-    'dialog.button.open': 'Öffnen',
-    'dialog.button.later': 'Später',
-    'dialog.button.openFolder': 'Ordner öffnen',
-    'dialog.button.openRelease': 'Release-Seite öffnen',
-    'dialog.button.updateNow': 'Jetzt aktualisieren',
-    'dialog.fileOpenFailed': 'Die Datei konnte nicht geöffnet werden',
-
     'editor.placeholder': '# Deine Überschrift\n\nSchreibe hier Markdown …',
+    'key.ctrl': 'Strg',
 
     'dialog.unsaved.title': 'Ungespeicherte Änderungen',
     'dialog.unsaved.detail': 'Das aktuelle Dokument enthält ungespeicherte Änderungen. Vor „{action}“ speichern?',
+    'dialog.button.open': 'Öffnen',
     'dialog.button.save': 'Speichern',
     'dialog.button.discard': 'Verwerfen',
     'dialog.button.cancel': 'Abbrechen',
     'dialog.button.close': 'Schließen',
-    'dialog.button.ok': 'OK',
     'dialog.saveFailed': 'Speichern fehlgeschlagen',
+    'dialog.noFileOpen': 'Es ist keine Datei geöffnet.',
     'dialog.close.title': 'Ungespeicherte Änderungen',
     'dialog.close.message': 'Das Dokument enthält ungespeicherte Änderungen.',
     'dialog.close.detail': 'Möchtest du vor dem Schließen speichern?',
     'dialog.close.save': 'Speichern und schließen',
     'dialog.close.discard': 'Ohne Speichern schließen',
     'dialog.close.cancel': 'Abbrechen',
-    'dialog.noFileOpen': 'Es ist keine Datei geöffnet.',
+    'dialog.openTitle': 'Markdown-Datei öffnen',
+    'dialog.saveTitle': 'Speichern unter',
+
+    'filter.markdown': 'Markdown',
+    'filter.text': 'Textdateien',
+    'filter.all': 'Alle Dateien',
+
+    'error.notAFile': 'Keine gültige Datei.',
+    'error.tooLarge': 'Die Datei ist größer als 20 MB und wird nicht geöffnet.',
 
     'about.title': "Eisballi's Markdown Viewer {version}",
     'about.detail': 'Plattform: {platform}\n\nTastenkürzel:\n{shortcuts}',
     'about.shortcuts':
-      'Strg+O  Öffnen\nStrg+S  Speichern\nStrg+Shift+S  Speichern unter\nStrg+1 / 2 / 3  Ansicht / Bearbeiten / Geteilt\nStrg+D  Hell/Dunkel\nStrg + Mausrad  Zoom\nStrg + + / -   Textgröße\nDoppelklick auf Breiten-Griff  Textbreite zurücksetzen',
+      'Strg+O  Öffnen\nStrg+S  Speichern\nStrg+Shift+S  Speichern unter\nStrg+1 / 2 / 3  Ansicht / Bearbeiten / Geteilt\nStrg+D  Hell/Dunkel\nStrg + Mausrad  Zoom\nStrg + + / -   Textgröße\nDoppelklick auf einen Breiten-Griff  Textbreite zurücksetzen',
 
     'update.availableMessage': 'Version {latest} ist verfügbar (installiert: {current}).',
     'update.availableDetail':

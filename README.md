@@ -1,111 +1,129 @@
 # Eisballi's Markdown Viewer
 
-Ein bewusst **schlanker** Markdown-Viewer mit einfachem Editor für **Windows** und **Linux (Ubuntu)**.
-Standardmäßig startet die App im **Dark Mode** und im **Ansichtsmodus** – also sofort lesbar, ohne Klick.
+A deliberately small Markdown viewer with a plain text editor for **Windows** and **Linux (Ubuntu)**.
+It starts in **dark mode** and **view mode**, so a document is readable right away – no clicking around.
 
-![App-Icon](build/icons/256x256.png)
+![App icon](build/icons/256x256.png)
 
-## Funktionen
+## Features
 
-| Bereich | Details |
+| Area | Details |
 | --- | --- |
-| Oberste Leiste | Öffnen · Speichern · Speichern unter · Ansicht · Bearbeiten · Geteilt · Textgröße ± · Hell/Dunkel · Nach Updates suchen · GitHub · eisballi.com · Sprache (EN/DE) |
-| Ansicht | Markdown gerendert (GFM: Tabellen, Aufgabenlisten, Code, Zitate) |
-| Bearbeiten | Texteditor mittig in der Textspaltenbreite, mit **Zeilennummern**; geänderte Zeilennummern sind **orange** markiert; Breite über die Griffe an beiden Kanten ziehbar |
-| Geteilt | Editor links, Vorschau rechts (Vorschau reicht bis zum Fensterrand) – die mittlere Trennlinie ist der Zieh-Griff für die Breite, beide Bereiche scrollen synchron |
-| Textbreite | Ansicht: rechter Rand der Textspalte ziehbar · Bearbeiten: beide Kanten · Doppelklick auf einen Griff setzt zurück |
-| Zoom | `Strg` + Mausrad zoomt die gesamte Oberfläche stufenlos (50–300 %) |
-| Textgröße | `A−` / `A+` bzw. `Strg` + `-` / `Strg` + `+`, unabhängig vom Zoom |
-| Dateien | Öffnen/Speichern/Speichern unter, Drag & Drop, „zuletzt geöffneter Ordner“ |
-| Sprache | Dropdown in der Leiste: **English (Standard)** oder **Deutsch**, auch über das Menü |
-| Update | Prüft GitHub-Releases **oder** lokale Git-Änderungen, fragt vor der Installation nach |
-| Standardprogramm | `.md`, `.markdown`, `.mdown` – Windows-Installer und Linux-Paket registrieren die Zuordnung |
+| Toolbar | Open · Save · Save as · View · Edit · Split · Text size ± · Light/dark · Check for updates · GitHub · eisballi.com · Language (EN/DE) |
+| View | Rendered Markdown (GFM: tables, task lists, code, quotes) |
+| Edit | Plain text editor centered in the text column with **line numbers**; changed line numbers are **orange**; width adjustable from both edges |
+| Split | Editor left, preview right (preview reaches the window edge) – the single divider is the drag handle for the width, both panes scroll together |
+| Text width | View: drag the right edge of the column · Edit: drag either edge · double-click a grip to reset |
+| Zoom | `Ctrl` + mouse wheel zooms the whole UI continuously (50–300 %) |
+| Text size | `A−` / `A+` or `Ctrl` + `-` / `Ctrl` + `+`, independent of zoom |
+| Files | Open, save, save as, drag & drop, remembers the last folder |
+| Language | Dropdown in the toolbar: **English (default)** or **Deutsch**, also available in the menu |
+| Updates | Checks GitHub releases **or** local git changes, asks before installing |
+| Default app | `.md`, `.markdown`, `.mdown` – the Windows installer and the Linux package register the association |
 
-Alles wird lokal gespeichert (`config.json` im Benutzer-Datenverzeichnis): Theme, Sprache,
-Textgröße, Textbreite, Split-Verhältnis, Zoom und Fenstergröße.
+Everything is stored locally (`config.json` in the user data directory): theme, language,
+text size, text width, split ratio, zoom and window bounds.
 
-## Tastenkürzel
+## Keyboard shortcuts
 
-| Kürzel | Aktion |
+| Shortcut | Action |
 | --- | --- |
-| `Strg+O` | Öffnen |
-| `Strg+S` / `Strg+Shift+S` | Speichern / Speichern unter |
-| `Strg+1` / `Strg+2` / `Strg+3` | Ansicht / Bearbeiten / Geteilt |
-| `Strg+D` | Hell/Dunkel umschalten |
-| `Strg` + Mausrad | Zoom |
-| `Strg` + `+` / `-` / `0` | Textgröße ändern / zurücksetzen |
-| `Strg+B` / `Strg+I` / `Strg+K` | Fett / Kursiv / Link (im Editor) |
-| `Tab` | Zwei Leerzeichen einfügen |
+| `Ctrl+O` | Open |
+| `Ctrl+S` / `Ctrl+Shift+S` | Save / save as |
+| `Ctrl+1` / `Ctrl+2` / `Ctrl+3` | View / Edit / Split |
+| `Ctrl+D` | Toggle light/dark |
+| `Ctrl` + mouse wheel | Zoom |
+| `Ctrl` + `+` / `-` / `0` | Text size up / down / reset |
+| `Ctrl+B` / `Ctrl+I` / `Ctrl+K` | Bold / italic / link (in the editor) |
+| `Tab` | Insert two spaces |
 
-## Entwicklung
+## Run from source
 
-Voraussetzungen: Node.js ≥ 20.
+Requirements: Node.js ≥ 20.
 
 ```bash
-npm install
-npm start          # App lokal starten
+npm ci
+npm start                                    # app with an empty document
+npx electron . examples/sample.md            # open a file directly
 ```
 
-`npm start` kopiert vorher `marked` und `DOMPurify` nach `src/renderer/vendor/`.
-Beim Entwickeln lässt sich eine Datei direkt übergeben: `npx electron . beispiel.md`.
+`npm start` copies `marked` and `DOMPurify` into `src/renderer/vendor/` beforehand.
 
-## Builds erzeugen
+## Tests
 
 ```bash
-npm run dist:win     # Windows: NSIS-Installer + portable EXE  -> release/
-npm run dist:linux   # Linux: AppImage + .deb                  -> release/
+npm test           # unit + end-to-end
+npm run test:unit  # string catalogs and update logic
+npm run test:e2e   # starts the real app and drives it via the DevTools protocol
 ```
 
-* **Windows** wird nativ gebaut (electron-builder, NSIS). Ergebnis:
-  `Eisballis-Markdown-Viewer-Setup-<version>.exe` (Installation + Dateizuordnung,
-  optionaler Standard-Haken für `.md`) und eine portable EXE (ohne Installation).
-* **Linux** muss auf Linux gebaut werden (AppImage-Werkzeuge). Unter Windows geht das z. B. in WSL:
+The end-to-end suite launches Electron with an isolated profile (`EISBALLI_USER_DATA`),
+opens `test/fixtures/sample.md` and verifies modes, layout, line numbers, scroll sync,
+language switching, text size and saving. On Linux CI it needs a display (`xvfb-run`).
+
+## Build
+
+```bash
+npm run dist:win     # Windows: NSIS installer + portable EXE   -> release/
+npm run dist:linux   # Linux: AppImage + .deb                   -> release/
+```
+
+* **Windows** builds natively with electron-builder:
+  `Eisballis-Markdown-Viewer-Setup-<version>.exe` (installs, registers the file
+  associations, optional "open with" entry) and a portable EXE.
+* **Linux** must be built on Linux because of the AppImage tooling. On Windows, WSL works:
 
   ```bash
-  wsl -d Ubuntu bash -lc "cd /mnt/c/Users/<user>/.../eisballis-markdown-viewer && npm install && npm run dist:linux"
+  wsl -d Ubuntu bash -lc "cd /mnt/c/path/to/eisballis-markdown-viewer && npm ci && npm run dist:linux"
   ```
 
-  Das `.deb` installiert sich mit `sudo dpkg -i Eisballis-Markdown-Viewer-<version>-x64.deb`,
-  die `.AppImage` läuft nach `chmod +x` direkt. Danach lässt sich die App in den
-  Systemeinstellungen als Standard für Markdown wählen.
+  Install the `.deb` with `sudo apt install ./Eisballis-Markdown-Viewer-<version>-amd64.deb`,
+  or `chmod +x` the AppImage and run it. Afterwards the app can be picked as the
+  default Markdown handler in the system settings.
 
-Die Icons werden aus `build/logo-source.png` erzeugt mit `npm run icons` (Python + Pillow).
-Diese Datei austauschen und den Befehl erneut ausführen, um ein anderes App-Icon zu setzen.
+Icons are generated from `build/logo-source.png` with `npm run icons` (Python + Pillow).
+Replace that file and re-run the command to use a different app icon.
 
-## Update-Prüfung
+## Update check
 
-Der Button **„Nach Updates suchen“** (und ein stiller Check ~10 s nach dem Start) nutzt zwei Quellen:
+The **Check for updates** button (and a silent check ~10 s after start) uses two sources:
 
-1. **GitHub-Releases** des Repositorys aus `package.json` (`repository.url`) –
-   ist ein neueres Release vorhanden, fragt die App:
-   *„Version X ist verfügbar … Möchtest du jetzt aktualisieren?“*
-   Nach dem Download startet unter Windows der Setup-Installer still, die App wird beendet
-   und anschließend automatisch neu gestartet. Unter Linux wird die neue AppImage/.deb gestartet.
-2. **Lokales Git-Repository** (Fallback, z. B. Entwickler-Checkout): Die App führt
-   `git fetch` aus und meldet neue Commits im Upstream-Branch.
+1. **GitHub releases** of the repository from `package.json` – when a newer release exists
+   the app asks *"Version X is available … update now?"*. After the download the Windows
+   setup runs silently, the app quits and restarts. On Linux the new AppImage or `.deb` is started.
+2. **Local git repository** (fallback, e.g. a developer checkout): runs `git fetch` and
+   reports new commits on the upstream branch.
 
-### Ein Update veröffentlichen
+See [docs/RELEASE.md](docs/RELEASE.md) for the release process. Set
+`EISBALLI_UPDATE_REPO=owner/repo` to override the update source, and `devRepoPath` in
+`config.json` to point a checkout at a specific clone.
 
-1. `package.json` → `"version"` erhöhen (z. B. `1.0.1`).
-2. Tag setzen und pushen: `git tag v1.0.1 && git push origin v1.0.1`.
-3. Die GitHub-Action `.github/workflows/build.yml` baut Windows- und Linux-Artefakte und
-   hängt sie an das Release. Fertig – installierte Apps finden das Update.
+## Architecture
 
-Ohne veröffentlichtes Release meldet die App „Keine Update-Quelle gefunden“ – das ist erwartet.
-Alternativ lässt sich die Update-Quelle per Umgebungsvariable `EISBALLI_UPDATE_REPO=owner/repo`
-übersteuern; für einen Entwickler-Checkout kann in der `config.json` zusätzlich
-`"devRepoPath": "C:/pfad/zum/repo"` gesetzt werden.
+* Electron (Chromium + Node) with no runtime dependencies besides `marked` and `DOMPurify`,
+  both shipped as vendor files in the renderer.
+* `contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`; all file and system
+  access goes through a small preload API.
+* Rendered Markdown is sanitized with DOMPurify; external links open in the default browser.
+* UI strings live in `src/shared/strings.js` and are shared by the main and renderer process.
 
-## Technik
+## Known build notes
 
-* Electron (Chromium + Node) – keine weiteren Laufzeit-Abhängigkeiten außer `marked` und `DOMPurify`,
-  beide werden als schlanke Vendor-Dateien in den Renderer kopiert.
-* `contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`; alle Datei- und
-  Systemzugriffe laufen über eine schmale Preload-API.
-* Gerendertes Markdown wird mit DOMPurify bereinigt, externe Links öffnen im Standardbrowser.
-* Windows-Installer: NSIS über electron-builder (Dateizuordnung, Startmenü, Desktop-Verknüpfung).
-* Linux: AppImage + Debian-Paket mit `.desktop`-Eintrag und MIME-Typen.
+These are expected and harmless:
 
-## Lizenz
+* `npm ci` reports deprecation notices for `glob@7`, `rimraf@2`, `inflight` and `boolean`.
+  They come from **electron-builder's own dependencies** (development only) and are not
+  part of the shipped app. They disappear once electron-builder updates its tree.
+* electron-builder logs “no node modules found in collection” because the app has no
+  runtime dependencies – `marked` and `DOMPurify` are vendored into `src/renderer/vendor/`.
+* “no code signing certificate configured” appears until a certificate is added; see
+  [docs/RELEASE.md](docs/RELEASE.md).
+* For `node_modules`, remember to run `npm install` before `npm start`; `sync-vendor` is part of
+  the start/test/build scripts.
 
-MIT – siehe [LICENSE](LICENSE).
+## License and assets
+
+Source code: [MIT](LICENSE). Third-party components: [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+
+The koala logo (`build/logo-source.png`, `build/icon.*`, `src/renderer/assets/`) is a project
+asset of Eisballi and is **not** covered by the MIT license.

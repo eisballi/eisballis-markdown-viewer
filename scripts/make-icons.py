@@ -1,6 +1,6 @@
-"""Erzeugt App-Icons aus build/logo-source.png (Fallback: gemaltes Icon).
+"""Builds the app icons from build/logo-source.png (fallback: a painted icon).
 
-Aufruf:  python scripts/make-icons.py
+Usage:  python scripts/make-icons.py
 """
 
 from __future__ import annotations
@@ -25,7 +25,7 @@ ACCENT = (127, 208, 255)
 
 
 def fallback_icon(size: int) -> Image.Image:
-    """Einfaches Ersatz-Icon, falls kein Logo vorliegt."""
+    """Simple fallback icon used when no logo is available."""
     scale = 4
     big = size * scale
     canvas = Image.new("RGB", (big, big), BACKGROUND_TOP)
@@ -75,7 +75,7 @@ def load_logo() -> Image.Image | None:
 
 
 def render_logo(logo: Image.Image, size: int) -> Image.Image:
-    # Kleine Größen brauchen weniger Rand, sonst verschwindet das Motiv.
+    # Small sizes need less padding, otherwise the artwork disappears.
     padding = 0 if size <= 32 else (1 if size <= 64 else 2)
     inner = max(1, size - padding * 2)
     scaled = logo.resize((inner, inner), Image.LANCZOS)
@@ -112,7 +112,7 @@ def main() -> None:
 
     logo = load_logo()
     build_icon = (lambda size: render_logo(logo, size)) if logo else fallback_icon
-    print("Quelle:", SOURCE if logo else "Fallback-Zeichnung")
+    print("Source:", SOURCE if logo else "fallback drawing")
 
     rendered = {}
     for size in SIZES:
@@ -122,11 +122,11 @@ def main() -> None:
     rendered[512].save(BUILD / "icon.png", format="PNG")
     write_ico([(size, build_icon(size)) for size in ICO_SIZES], BUILD / "icon.ico")
 
-    # Logo für die Oberfläche (Website-Button, Favicon)
+    # Logo used by the UI (website button, favicon)
     build_icon(96).save(ASSETS / "logo.png", format="PNG")
     build_icon(64).save(ASSETS / "logo-64.png", format="PNG")
 
-    print(f"Icons erstellt in {ICONS} und {BUILD}\\icon.ico; UI-Logo in {ASSETS}")
+    print(f"Icons written to {ICONS} and {BUILD}\\icon.ico; UI logo in {ASSETS}")
 
 
 if __name__ == "__main__":

@@ -12,7 +12,6 @@ contextBridge.exposeInMainWorld('api', {
   info: () => ipcRenderer.invoke('app:info'),
   pendingFile: () => ipcRenderer.invoke('app:pending-file'),
   openFile: (filePath) => ipcRenderer.invoke('file:open', filePath || undefined),
-  reloadFile: (filePath) => ipcRenderer.invoke('file:reload', filePath),
   saveFile: (payload) => ipcRenderer.invoke('file:save', payload),
   saveFileAs: (payload) => ipcRenderer.invoke('file:save-as', payload),
   updateSettings: (patch) => ipcRenderer.invoke('settings:update', patch),
@@ -27,7 +26,6 @@ contextBridge.exposeInMainWorld('api', {
   openExternal: (url) => ipcRenderer.invoke('shell:open-external', url),
   openPath: (targetPath) => ipcRenderer.invoke('shell:open-path', targetPath),
   showItemInFolder: (targetPath) => ipcRenderer.invoke('shell:show-item', targetPath),
-  fileUrl: (filePath) => ipcRenderer.invoke('file:url', filePath),
   checkUpdates: (options) => ipcRenderer.invoke('update:check', options),
   installUpdate: (payload) => ipcRenderer.invoke('update:install', payload),
   pathForFile: (file) => {

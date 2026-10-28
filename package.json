@@ -2,26 +2,29 @@
   "name": "eisballis-markdown-viewer",
   "productName": "Eisballi's Markdown Viewer",
   "version": "1.0.0",
-  "description": "Leichtgewichtiger Markdown-Viewer und -Editor fuer Windows und Linux",
+  "description": "Lightweight Markdown viewer and editor for Windows and Linux",
   "main": "src/main.js",
   "desktopName": "eisballis-markdown-viewer.desktop",
   "author": {
     "name": "Eisballi",
     "email": "eisballi@users.noreply.github.com"
   },
-  "homepage": "https://github.com/Eisballi/eisballis-markdown-viewer",
+  "homepage": "https://eisballi.com",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Eisballi/eisballis-markdown-viewer.git"
   },
   "license": "MIT",
-  "private": true,
+  "private": false,
   "engines": {
     "node": ">=20"
   },
   "scripts": {
     "vendor": "node scripts/sync-vendor.mjs",
     "start": "node scripts/sync-vendor.mjs && electron .",
+    "test": "node scripts/sync-vendor.mjs && node --test \"test/unit/*.test.js\" \"test/e2e/*.test.js\"",
+    "test:unit": "node --test \"test/unit/*.test.js\"",
+    "test:e2e": "node scripts/sync-vendor.mjs && node --test \"test/e2e/*.test.js\"",
     "pack": "node scripts/sync-vendor.mjs && electron-builder --dir",
     "dist": "node scripts/sync-vendor.mjs && electron-builder",
     "dist:win": "node scripts/sync-vendor.mjs && electron-builder --win",

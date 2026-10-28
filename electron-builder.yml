@@ -14,6 +14,8 @@ files:
 
 asar: true
 compression: maximum
+# No native modules are used, so the rebuild step is skipped.
+npmRebuild: false
 
 win:
   icon: build/icon.ico
@@ -24,18 +26,18 @@ win:
       arch: [x64]
   fileAssociations:
     - ext: md
-      name: Markdown-Dokument
-      description: Markdown-Datei
+      name: Markdown Document
+      description: Markdown document
       role: Editor
       icon: build/icon.ico
     - ext: markdown
-      name: Markdown-Dokument
-      description: Markdown-Datei
+      name: Markdown Document
+      description: Markdown document
       role: Editor
       icon: build/icon.ico
     - ext: mdown
-      name: Markdown-Dokument
-      description: Markdown-Datei
+      name: Markdown Document
+      description: Markdown document
       role: Editor
       icon: build/icon.ico
 
@@ -59,10 +61,10 @@ linux:
   executableName: eisballis-markdown-viewer
   syncDesktopName: true
   category: Office
-  synopsis: Leichtgewichtiger Markdown-Viewer und -Editor
+  synopsis: Lightweight Markdown viewer and editor
   description: >-
-    Sehr schlanker Markdown-Viewer mit einfachem Editor, Live-Vorschau,
-    hellem und dunklem Design sowie Update-Prüfung.
+    A deliberately small Markdown viewer with a plain text editor, live preview,
+    light and dark themes and a built-in update check.
   target:
     - target: AppImage
       arch: [x64]
@@ -75,7 +77,7 @@ linux:
     entry:
       Name: "Eisballi's Markdown Viewer"
       GenericName: Markdown Viewer
-      Comment: Markdown-Dateien anzeigen und einfach bearbeiten
+      Comment: View and lightly edit Markdown files
       Keywords: markdown;md;viewer;editor;
       Categories: Office;Viewer;TextEditor;
       MimeType: text/markdown;text/x-markdown;

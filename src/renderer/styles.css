@@ -340,7 +340,7 @@ body {
   border-right: 0;
 }
 
-/* Spaltenkante als Overlay: Textblock rechtsbündig, Scrollleiste am Fensterrand. */
+/* Column edges as an overlay so the scrollbar can stay at the window edge. */
 :root[data-mode="edit"] #editor-pane::after {
   content: "";
   position: absolute;
@@ -361,7 +361,7 @@ body {
   height: 100%;
 }
 
-/* Der Textblock bleibt mittig, die Scrollleiste sitzt am rechten Fensterrand. */
+/* The text block stays centered; padding keeps it clear of the window edge. */
 :root[data-mode="edit"] #editor-shell {
   padding-left: var(--edit-pad-left, 0px);
 }
@@ -433,14 +433,13 @@ body {
   color: var(--text-faint);
 }
 
-/* Nur im reinen Bearbeiten-Modus: Text endet vor dem rechten Rand,
-   die Scrollleiste bleibt aber ganz rechts am Fenster. */
+/* Edit mode: the text ends before the right edge, the scrollbar stays at the window edge. */
 :root[data-mode="edit"] #editor,
 :root[data-mode="edit"] #editor-mirror {
   padding-right: calc(var(--edit-pad-right, 0px) + 24px);
 }
 
-/* Im Split-Modus gibt es nur eine sichtbare Scrollleiste (rechts in der Vorschau). */
+/* Split mode shows a single scrollbar (on the right, in the preview). */
 :root[data-mode="split"] #editor {
   scrollbar-width: none;
 }
@@ -482,7 +481,7 @@ body {
   touch-action: none;
 }
 
-/* Breite Greiffläche über den angrenzenden Bereichen (unsichtbar). */
+/* Wide, invisible grab area over the adjacent panes. */
 #splitter::after {
   content: "";
   position: absolute;
@@ -522,7 +521,7 @@ body {
   border-right: 1px solid var(--column-line);
 }
 
-/* Split: Die Vorschau reicht immer bis zum rechten Rand, links ist die Trennlinie. */
+/* Split: the preview always reaches the right edge, the divider is on the left. */
 :root[data-mode="split"] #preview {
   width: auto;
   max-width: none;
@@ -533,17 +532,13 @@ body {
   padding-right: 24px;
 }
 
-/* Der Griff markiert die rechte Spaltenkante und hebt sie beim Ziehen hervor. */
+/* The grip marks the right column edge and highlights it while dragging. */
 #preview-pane:has(#width-handle:hover) #preview {
   border-right-color: color-mix(in srgb, var(--accent) 55%, var(--column-line));
 }
 
 #preview-pane:has(#width-handle.dragging) #preview {
   border-right-color: var(--accent);
-}
-
-#preview-pane:hover #width-handle {
-  opacity: 1;
 }
 
 #width-handle {
@@ -584,7 +579,7 @@ body {
   background: var(--accent);
 }
 
-/* Griffe für beide Kanten im Bearbeiten-Modus. */
+/* Edge grips for edit mode. */
 #edit-handle,
 #edit-handle-right {
   position: absolute;
@@ -625,7 +620,7 @@ body {
   opacity: 0.7;
 }
 
-/* In der Bearbeitung dauerhaft leicht sichtbar, damit der Griff auffindbar ist. */
+/* Slightly visible in edit mode so the grip is easy to find. */
 :root[data-mode="edit"] #edit-handle,
 :root[data-mode="edit"] #edit-handle-right {
   opacity: 0.4;
