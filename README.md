@@ -69,7 +69,8 @@ npm run dist:linux   # Linux: AppImage + .deb                  -> release/
   die `.AppImage` läuft nach `chmod +x` direkt. Danach lässt sich die App in den
   Systemeinstellungen als Standard für Markdown wählen.
 
-Die Icons werden bei Bedarf neu erzeugt mit `npm run icons` (Python + Pillow).
+Die Icons werden aus `build/logo-source.png` erzeugt mit `npm run icons` (Python + Pillow).
+Diese Datei austauschen und den Befehl erneut ausführen, um ein anderes App-Icon zu setzen.
 
 ## Update-Prüfung
 

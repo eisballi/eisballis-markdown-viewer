@@ -135,6 +135,15 @@ body {
   stroke: none;
 }
 
+.tb-logo {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  object-fit: contain;
+  -webkit-user-drag: none;
+}
+
 .tb-btn:hover {
   background: var(--accent-soft);
 }
