@@ -6,6 +6,7 @@
   --bg-input: #10131a;
   --border: #262b35;
   --border-strong: #333a47;
+  --column-line: #3a424f;
   --text: #e6e9ef;
   --text-dim: #98a1b1;
   --text-faint: #6b7484;
@@ -30,6 +31,7 @@
   --bg-input: #ffffff;
   --border: #e3e6ec;
   --border-strong: #cbd2dc;
+  --column-line: #c3ccd8;
   --text: #1b1f27;
   --text-dim: #5c6674;
   --text-faint: #8a94a4;
@@ -161,6 +163,75 @@ body {
   color: var(--text);
 }
 
+/* --------------------------------------------------------- language select */
+
+.tb-select {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 30px;
+  padding: 0 4px 0 9px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.tb-select:hover {
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+.tb-select:focus-within {
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  color: var(--text);
+}
+
+.tb-select-icon {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.tb-select-input {
+  appearance: none;
+  -webkit-appearance: none;
+  height: 100%;
+  padding: 0 18px 0 2px;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+.tb-select-input option {
+  background: var(--bg-elevated);
+  color: var(--text);
+}
+
+.tb-select-chevron {
+  position: absolute;
+  right: 6px;
+  width: 13px;
+  height: 13px;
+  pointer-events: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .tb-btn.is-active {
   background: var(--accent-soft);
   border-color: color-mix(in srgb, var(--accent) 45%, transparent);
@@ -207,7 +278,7 @@ body {
 }
 
 @media (max-width: 1400px) {
-  #toolbar .tb-btn > span:not(.badge):not(#lang-label) {
+  #toolbar .tb-btn > span:not(.badge) {
     display: none;
   }
 
@@ -251,13 +322,27 @@ body {
   display: flex;
   min-width: 0;
   overflow: hidden;
-  border-right: 1px solid var(--border);
   background: var(--bg-input);
 }
 
 :root[data-mode="edit"] #editor-pane {
   flex: 1 1 auto;
+  position: relative;
   border-right: 0;
+}
+
+/* Spaltenkanten als Overlay, damit die Scrollleiste am Fensterrand bleibt. */
+:root[data-mode="edit"] #editor-pane::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--edit-pad-left, 0px);
+  right: calc(var(--edit-pad-right, 0px) + var(--edit-scrollbar, 0px));
+  border-left: 1px solid var(--column-line);
+  border-right: 1px solid var(--column-line);
+  pointer-events: none;
+  z-index: 3;
 }
 
 #editor-shell {
@@ -267,12 +352,9 @@ body {
   height: 100%;
 }
 
-/* Ohne Vorschau steht der Editor mittig in der Textspaltenbreite. */
+/* Der Textblock bleibt mittig, die Scrollleiste sitzt am rechten Fensterrand. */
 :root[data-mode="edit"] #editor-shell {
-  width: min(var(--content-width), calc(100% - 40px));
-  margin: 0 auto;
-  border-left: 1px solid var(--border);
-  border-right: 1px solid var(--border);
+  padding-left: var(--edit-pad-left, 0px);
 }
 
 #gutter {
@@ -342,6 +424,12 @@ body {
   color: var(--text-faint);
 }
 
+/* Nur im reinen Bearbeiten-Modus: Textblock mittig, Scrollleiste am Fensterrand. */
+:root[data-mode="edit"] #editor,
+:root[data-mode="edit"] #editor-mirror {
+  padding-right: calc(var(--edit-pad-right, 0px) + 24px);
+}
+
 /* Im Split-Modus gibt es nur eine sichtbare Scrollleiste (rechts in der Vorschau). */
 :root[data-mode="split"] #editor {
   scrollbar-width: none;
@@ -375,10 +463,18 @@ body {
 }
 
 #splitter {
-  flex: 0 0 5px;
-  cursor: col-resize;
+  position: relative;
+  flex: 0 0 1px;
   background: var(--border);
+  cursor: col-resize;
   transition: background-color 120ms ease;
+}
+
+/* Größere Greiffläche, ohne eine zweite sichtbare Kante zu erzeugen. */
+#splitter::after {
+  content: "";
+  position: absolute;
+  inset: 0 -4px;
 }
 
 #splitter:hover,
@@ -406,6 +502,21 @@ body {
   max-width: calc(100% - 24px);
   margin: 0 auto;
   padding: 28px 26px 120px;
+  border-left: 1px solid var(--column-line);
+  border-right: 1px solid var(--column-line);
+}
+
+/* Der Griff markiert die rechte Spaltenkante und hebt sie beim Ziehen hervor. */
+#preview-pane:has(#width-handle:hover) #preview {
+  border-right-color: color-mix(in srgb, var(--accent) 55%, var(--column-line));
+}
+
+#preview-pane:has(#width-handle.dragging) #preview {
+  border-right-color: var(--accent);
+}
+
+#preview-pane:hover #width-handle {
+  opacity: 1;
 }
 
 #width-handle {

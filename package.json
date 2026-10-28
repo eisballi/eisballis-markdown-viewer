@@ -1,6 +1,6 @@
 {
   "name": "eisballis-markdown-viewer",
-  "productName": "Eisballis Markdown Viewer",
+  "productName": "Eisballi's Markdown Viewer",
   "version": "1.0.0",
   "description": "Leichtgewichtiger Markdown-Viewer und -Editor fuer Windows und Linux",
   "main": "src/main.js",

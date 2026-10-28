@@ -9,7 +9,7 @@ const { pathToFileURL } = require('node:url');
 const updater = require('./updater');
 const STRINGS = require('./shared/strings.js');
 
-const APP_NAME = 'Eisballis Markdown Viewer';
+const APP_NAME = "Eisballi's Markdown Viewer";
 const WEBSITE_URL = 'https://eisballi.com';
 const MAX_FILE_SIZE = 20 * 1024 * 1024;
 const isDev = !app.isPackaged;

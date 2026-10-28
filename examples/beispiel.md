@@ -1,6 +1,6 @@
 # Beispiel-Dokument
 
-Willkommen beim **Eisballis Markdown Viewer**. Diese Datei zeigt, was der Viewer kann.
+Willkommen beim **Eisballi's Markdown Viewer**. Diese Datei zeigt, was der Viewer kann.
 
 ## Text & Formatierung
 

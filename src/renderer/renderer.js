@@ -18,8 +18,7 @@
     updateBadge: document.getElementById('update-badge'),
     github: document.getElementById('btn-github'),
     website: document.getElementById('btn-website'),
-    language: document.getElementById('btn-language'),
-    langLabel: document.getElementById('lang-label'),
+    language: document.getElementById('lang-select'),
     about: document.getElementById('btn-about'),
     workspace: document.getElementById('workspace'),
     editorPane: document.getElementById('editor-pane'),
@@ -51,6 +50,7 @@
   const DEFAULT_SPLIT = 0.5;
   const DEFAULT_TEXT_SIZE = 17;
   const GUTTER_LINE_LIMIT = 6000;
+  const GUTTER_WIDTH = 58;
 
   const state = {
     appInfo: { version: '0.0.0', platform: 'win32', githubUrl: '', websiteUrl: '' },
@@ -75,6 +75,7 @@
   let statusTimer = null;
   let metaTimer = null;
   let gutterTimer = null;
+  let editPad = { left: -1, right: -1 };
 
   /* ------------------------------------------------------------------ i18n */
 
@@ -99,7 +100,8 @@
       node.textContent = t(node.getAttribute('data-i18n'));
     }
 
-    el.langLabel.textContent = state.language.toUpperCase();
+    el.language.value = state.language;
+    el.language.title = t('ui.language');
     el.editor.placeholder = t('editor.placeholder');
     el.dropText.textContent = t('drop.text');
     el.hintCtrl.textContent = t('key.ctrl');
@@ -120,7 +122,6 @@
     el.update.title = t('ui.checkUpdates');
     el.github.title = t('ui.github');
     el.website.title = t('ui.website');
-    el.language.title = `${t('ui.language')}: ${t('lang.name')} – ${t('lang.next')}`;
     el.about.title = t('ui.about');
     updateThemeTitle();
 
@@ -221,7 +222,7 @@
 
   function updateTitle() {
     const name = state.fileName || t('title.untitled');
-    const title = `${state.dirty ? '• ' : ''}${name} – Eisballis Markdown Viewer`;
+    const title = `${state.dirty ? '• ' : ''}${name} – Eisballi's Markdown Viewer`;
     document.title = title;
     api.setTitle(title);
     el.statusFile.textContent = state.filePath || t('status.noFile');
@@ -489,8 +490,35 @@
     clearTimeout(gutterTimer);
     gutterTimer = setTimeout(() => {
       if (state.mode === 'view') return;
+      updateEditLayout();
       renderGutter();
+      const before = `${editPad.left}:${editPad.right}`;
+      updateEditLayout();
+      if (`${editPad.left}:${editPad.right}` !== before) renderGutter();
     }, delay);
+  }
+
+  /**
+   * Rein rechter Rand im Bearbeiten-Modus: Der Textblock bleibt mittig, die
+   * Scrollleiste gehört aber zum Vollbreiten-Editor und sitzt am Fensterrand.
+   */
+  function updateEditLayout() {
+    if (state.mode !== 'edit') return;
+    const pane = el.editorPane.clientWidth;
+    if (!pane) return;
+
+    const scrollbar = Math.max(0, el.editor.offsetWidth - el.editor.clientWidth);
+    const avail = Math.max(160, pane - scrollbar);
+    const width = Math.min(state.contentWidth, Math.max(MIN_WIDTH, pane - 40));
+    const free = Math.max(0, avail - GUTTER_WIDTH - width);
+    const left = Math.round(free / 2);
+    const right = Math.round(free - left);
+
+    if (left === editPad.left && right === editPad.right) return;
+    editPad = { left, right };
+    document.documentElement.style.setProperty('--edit-pad-left', `${left}px`);
+    document.documentElement.style.setProperty('--edit-pad-right', `${right}px`);
+    document.documentElement.style.setProperty('--edit-scrollbar', `${scrollbar}px`);
   }
 
   /* --------------------------------------------------------- width handle */
@@ -853,9 +881,11 @@
     });
   }
 
-  function toggleLanguage() {
-    applyLanguage(state.language === 'de' ? 'en' : 'de');
+  function handleLanguageChange() {
+    applyLanguage(el.language.value);
     setStatus(`${t('ui.language')}: ${t('lang.name')}`, 2500);
+    el.language.blur();
+    restoreEditorFocus();
   }
 
   /* ------------------------------------------------------------ key events */
@@ -1072,7 +1102,7 @@
       applyContentWidth(DEFAULT_WIDTH);
       setStatus(t('status.widthReset'));
     });
-    el.language.addEventListener('click', toggleLanguage);
+    el.language.addEventListener('change', handleLanguageChange);
     el.github.addEventListener('click', () => {
       if (state.appInfo.githubUrl) api.openExternal(state.appInfo.githubUrl);
     });

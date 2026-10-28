@@ -1,4 +1,4 @@
-# Eisballis Markdown Viewer
+# Eisballi's Markdown Viewer
 
 Ein bewusst **schlanker** Markdown-Viewer mit einfachem Editor für **Windows** und **Linux (Ubuntu)**.
 Standardmäßig startet die App im **Dark Mode** und im **Ansichtsmodus** – also sofort lesbar, ohne Klick.
@@ -13,11 +13,11 @@ Standardmäßig startet die App im **Dark Mode** und im **Ansichtsmodus** – al
 | Ansicht | Markdown gerendert (GFM: Tabellen, Aufgabenlisten, Code, Zitate) |
 | Bearbeiten | Texteditor mittig in der Textspaltenbreite, mit **Zeilennummern**; geänderte Zeilennummern sind **orange** markiert |
 | Geteilt | Editor links, Vorschau rechts – Trenner frei verschiebbar, **eine gemeinsame Scrollleiste** (beide Bereiche laufen parallel) |
-| Textbreite | Grauer Griff am rechten Rand der Textspalte, mit der Maus ziehbar; Doppelklick setzt zurück |
+| Textbreite | Dünne Begrenzungslinien links und rechts der Textspalte; rechter Rand mit der Maus ziehbar, Doppelklick setzt zurück |
 | Zoom | `Strg` + Mausrad zoomt die gesamte Oberfläche stufenlos (50–300 %) |
 | Textgröße | `A−` / `A+` bzw. `Strg` + `-` / `Strg` + `+`, unabhängig vom Zoom |
 | Dateien | Öffnen/Speichern/Speichern unter, Drag & Drop, „zuletzt geöffneter Ordner“ |
-| Sprache | Englisch (Standard) und Deutsch, umschaltbar über die Leiste, das Menü oder `config.json` |
+| Sprache | Dropdown in der Leiste: **English (Standard)** oder **Deutsch**, auch über das Menü |
 | Update | Prüft GitHub-Releases **oder** lokale Git-Änderungen, fragt vor der Installation nach |
 | Standardprogramm | `.md`, `.markdown`, `.mdown` – Windows-Installer und Linux-Paket registrieren die Zuordnung |
 

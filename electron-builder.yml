@@ -1,5 +1,5 @@
 appId: de.eisballi.markdownviewer
-productName: Eisballis Markdown Viewer
+productName: "Eisballi's Markdown Viewer"
 copyright: Copyright © 2026 Eisballi
 
 directories:
@@ -46,7 +46,7 @@ nsis:
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: true
   createStartMenuShortcut: true
-  shortcutName: Eisballis Markdown Viewer
+  shortcutName: "Eisballi's Markdown Viewer"
   runAfterFinish: true
   deleteAppDataOnUninstall: false
   artifactName: Eisballis-Markdown-Viewer-Setup-${version}.${ext}
@@ -73,7 +73,7 @@ linux:
     - text/x-markdown
   desktop:
     entry:
-      Name: Eisballis Markdown Viewer
+      Name: "Eisballi's Markdown Viewer"
       GenericName: Markdown Viewer
       Comment: Markdown-Dateien anzeigen und einfach bearbeiten
       Keywords: markdown;md;viewer;editor;

@@ -87,7 +87,7 @@
     'dialog.close.cancel': 'Cancel',
     'dialog.noFileOpen': 'No file is open.',
 
-    'about.title': 'Eisballis Markdown Viewer {version}',
+    'about.title': "Eisballi's Markdown Viewer {version}",
     'about.detail': 'Platform: {platform}\n\nShortcuts:\n{shortcuts}',
     'about.shortcuts':
       'Ctrl+O  Open\nCtrl+S  Save\nCtrl+Shift+S  Save as\nCtrl+1 / Ctrl+2 / Ctrl+3  View / Edit / Split\nCtrl+D  Light/dark\nCtrl + mouse wheel  Zoom\nCtrl + + / -  Text size\nDouble-click the width grip  Reset text width',
@@ -227,7 +227,7 @@
     'dialog.close.cancel': 'Abbrechen',
     'dialog.noFileOpen': 'Es ist keine Datei geöffnet.',
 
-    'about.title': 'Eisballis Markdown Viewer {version}',
+    'about.title': "Eisballi's Markdown Viewer {version}",
     'about.detail': 'Plattform: {platform}\n\nTastenkürzel:\n{shortcuts}',
     'about.shortcuts':
       'Strg+O  Öffnen\nStrg+S  Speichern\nStrg+Shift+S  Speichern unter\nStrg+1 / 2 / 3  Ansicht / Bearbeiten / Geteilt\nStrg+D  Hell/Dunkel\nStrg + Mausrad  Zoom\nStrg + + / -   Textgröße\nDoppelklick auf Breiten-Griff  Textbreite zurücksetzen',
