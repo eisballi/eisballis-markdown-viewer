@@ -20,9 +20,14 @@ function freePort() {
   });
 }
 
-async function waitForTarget(port, timeoutMs = 30000) {
+/**
+ * Polls the DevTools endpoint. Fails fast when the child process itself could not be
+ * started (for example `spawn ETXTBSY` right after the Electron binary was unpacked).
+ */
+async function waitForTarget(port, failure, timeoutMs = 30000) {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
+    if (failure.error) throw failure.error;
     try {
       const response = await fetch(`http://127.0.0.1:${port}/json/list`);
       const targets = await response.json();
@@ -129,14 +134,22 @@ async function launchApp(documentPath, attempt = 1) {
 
   const exited = new Promise((resolve) => child.once('exit', resolve));
 
+  // Right after `npm ci` the Electron binary can still be busy (`spawn ETXTBSY`),
+  // so spawn errors are captured and turned into a retry.
+  const failure = { error: null };
+  child.once('error', (error) => {
+    failure.error = error;
+  });
+
   let target;
   try {
-    target = await waitForTarget(port);
+    target = await waitForTarget(port, failure);
   } catch (error) {
-    // A stale instance or a busy port can swallow the first start, so try once more.
+    // A stale instance, a busy binary or a busy port can swallow the first start.
     stop(child);
     fs.rmSync(userDataDir, { recursive: true, force: true });
     if (attempt >= 3) throw error;
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     return launchApp(documentPath, attempt + 1);
   }
 
