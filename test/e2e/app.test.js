@@ -98,13 +98,21 @@ test('switching the language updates the UI and is persisted', async () => {
 });
 
 test('view mode shows the column borders and the width grip', async () => {
-  const view = await app.evaluate(`(() => {
+  const view = await app.evaluate(`(async () => {
+    // The grip is positioned on the next animation frame, so wait for it.
+    let handle = document.getElementById('width-handle');
+    for (let i = 0; i < 60; i += 1) {
+      if (!handle.hidden && handle.style.left) break;
+      window.dispatchEvent(new Event('resize'));
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+
+    handle = document.getElementById('width-handle');
     const preview = document.getElementById('preview');
     const paneElement = document.getElementById('preview-pane');
     const pane = paneElement.getBoundingClientRect();
     const column = preview.getBoundingClientRect();
     const overlay = getComputedStyle(paneElement, '::after');
-    const handle = document.getElementById('width-handle');
     return {
       borderLeft: parseFloat(overlay.borderLeftWidth),
       borderRight: parseFloat(overlay.borderRightWidth),
