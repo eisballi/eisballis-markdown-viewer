@@ -93,10 +93,17 @@ jobs:
         with:
           path: artifacts
 
+      - name: Check that the builds produced files
+        run: |
+          ls -R artifacts
+          count=$(find artifacts -type f \( -name '*.exe' -o -name '*.AppImage' -o -name '*.deb' \) | wc -l)
+          echo "found $count installer(s)"
+          test "$count" -ge 8
+
       - uses: softprops/action-gh-release@v2
         with:
           files: |
-            artifacts/windows/*.exe
-            artifacts/linux/*.AppImage
-            artifacts/linux/*.deb
+            artifacts/**/*.exe
+            artifacts/**/*.AppImage
+            artifacts/**/*.deb
           generate_release_notes: true
