@@ -5,6 +5,16 @@ It starts in **dark mode** and **view mode**, so a document is readable right aw
 
 ![App icon](build/icons/256x256.png)
 
+## Screenshots
+
+| View (dark, default) | Split |
+| --- | --- |
+| ![View mode in dark theme](docs/screenshots/view-dark.png) | ![Split view with editor and preview](docs/screenshots/split-dark.png) |
+
+| Edit with line numbers | View (light) |
+| --- | --- |
+| ![Edit mode with line numbers](docs/screenshots/edit-dark.png) | ![View mode in light theme](docs/screenshots/view-light.png) |
+
 ## Features
 
 | Area | Details |
