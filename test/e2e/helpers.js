@@ -145,11 +145,12 @@ async function launchApp(documentPath, attempt = 1) {
   try {
     target = await waitForTarget(port, failure);
   } catch (error) {
-    // A stale instance, a busy binary or a busy port can swallow the first start.
+    // A stale instance, a still-busy binary (`spawn ETXTBSY`) or a busy port can
+    // swallow the first start, so retry a few times with a growing delay.
     stop(child);
     fs.rmSync(userDataDir, { recursive: true, force: true });
-    if (attempt >= 3) throw error;
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    if (attempt >= 6) throw error;
+    await new Promise((resolve) => setTimeout(resolve, attempt * 1500));
     return launchApp(documentPath, attempt + 1);
   }
 
