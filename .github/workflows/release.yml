@@ -19,6 +19,13 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci --no-audit --no-fund
+      - name: Install Electron libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            xvfb libnss3 libgbm1 libgtk-3-0 libatk-bridge2.0-0 libcups2 libdrm2 libxkbcommon0
+          sudo apt-get install -y --no-install-recommends libasound2t64 \
+            || sudo apt-get install -y --no-install-recommends libasound2
       - run: xvfb-run --auto-servernum npm test
         env:
           CI: "true"
