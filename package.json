@@ -26,9 +26,9 @@
     "test:unit": "node --test \"test/unit/*.test.js\"",
     "test:e2e": "node scripts/sync-vendor.mjs && node --test \"test/e2e/*.test.js\"",
     "pack": "node scripts/sync-vendor.mjs && electron-builder --dir",
-    "dist": "node scripts/sync-vendor.mjs && electron-builder",
-    "dist:win": "node scripts/sync-vendor.mjs && electron-builder --win",
-    "dist:linux": "node scripts/sync-vendor.mjs && electron-builder --linux",
+    "dist": "node scripts/sync-vendor.mjs && electron-builder --publish never",
+    "dist:win": "node scripts/sync-vendor.mjs && electron-builder --win --publish never",
+    "dist:linux": "node scripts/sync-vendor.mjs && electron-builder --linux --publish never",
     "icons": "python scripts/make-icons.py"
   },
   "devDependencies": {
