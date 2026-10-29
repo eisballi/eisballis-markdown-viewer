@@ -10,7 +10,8 @@ permissions:
   contents: write
 
 jobs:
-  test:
+  unit:
+    name: Unit tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,32 +20,11 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci --no-audit --no-fund
-      - name: Install Electron libraries
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            xvfb libnss3 libgbm1 libgtk-3-0 libatk-bridge2.0-0 libcups2 libdrm2 libxkbcommon0
-          sudo apt-get install -y --no-install-recommends libasound2t64 \
-            || sudo apt-get install -y --no-install-recommends libasound2
-      - name: Wait until the Electron binary is executable
-        run: |
-          binary="$(node -p "require('electron')")"
-          for attempt in $(seq 1 30); do
-            if xvfb-run -a "$binary" --no-sandbox --version > /dev/null 2>&1; then
-              echo "electron ready"
-              exit 0
-            fi
-            echo "electron binary not executable yet (attempt $attempt)"
-            sleep 2
-          done
-          echo "electron binary never became executable"
-          exit 1
-      - run: xvfb-run --auto-servernum npm test
-        env:
-          CI: "true"
+      - run: npm run test:unit
 
   windows:
-    needs: test
+    name: Build Windows
+    needs: unit
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -53,7 +33,12 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci --no-audit --no-fund
-      - run: npm run dist:win
+
+      - name: End-to-end tests
+        run: npm run test:e2e
+
+      - name: Build installer and portable exe
+        run: npm run dist:win
 
       - name: Prepare stable file names
         shell: pwsh
@@ -71,7 +56,8 @@ jobs:
           if-no-files-found: error
 
   linux:
-    needs: test
+    name: Build Linux
+    needs: unit
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -80,7 +66,9 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci --no-audit --no-fund
-      - run: npm run dist:linux
+
+      - name: Build AppImage and deb
+        run: npm run dist:linux
 
       - name: Prepare stable file names
         run: |
@@ -98,6 +86,7 @@ jobs:
           if-no-files-found: error
 
   publish:
+    name: Publish release
     if: startsWith(github.ref, 'refs/tags/v')
     needs: [windows, linux]
     runs-on: ubuntu-latest

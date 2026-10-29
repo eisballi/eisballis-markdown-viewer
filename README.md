@@ -59,7 +59,9 @@ npm run test:e2e   # starts the real app and drives it via the DevTools protocol
 
 The end-to-end suite launches Electron with an isolated profile (`EISBALLI_USER_DATA`),
 opens `test/fixtures/sample.md` and verifies modes, layout, line numbers, scroll sync,
-language switching, text size and saving. On Linux CI it needs a display (`xvfb-run`).
+language switching, text size and saving. CI runs the unit tests on Linux and the
+end-to-end suite on Windows, where the runner can start the Electron binary reliably;
+Linux CI builds the AppImage and the `.deb`.
 
 ## Build
 

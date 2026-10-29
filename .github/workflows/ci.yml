@@ -10,54 +10,45 @@ permissions:
   contents: read
 
 jobs:
-  test:
-    name: Tests (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows-latest, ubuntu-latest]
+  unit:
+    name: Unit tests
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run test:unit
 
-      - name: Install dependencies
-        run: npm ci --no-audit --no-fund
+  e2e:
+    name: End-to-end tests (Windows)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run test:e2e
 
-      - name: Install Electron libraries (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            xvfb libnss3 libgbm1 libgtk-3-0 libatk-bridge2.0-0 libcups2 libdrm2 libxkbcommon0
-          sudo apt-get install -y --no-install-recommends libasound2t64 \
-            || sudo apt-get install -y --no-install-recommends libasound2
-
-      - name: Wait until the Electron binary is executable (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          binary="$(node -p "require('electron')")"
-          for attempt in $(seq 1 30); do
-            if xvfb-run -a "$binary" --no-sandbox --version > /dev/null 2>&1; then
-              echo "electron ready: $("$binary" --version 2>/dev/null || echo ok)"
-              exit 0
-            fi
-            echo "electron binary not executable yet (attempt $attempt)"
-            sleep 2
-          done
-          echo "electron binary never became executable"
-          exit 1
-
-      - name: Run tests
-        if: runner.os == 'Windows'
-        run: npm test
-
-      - name: Run tests (Linux, headless)
-        if: runner.os == 'Linux'
-        run: xvfb-run --auto-servernum npm test
-        env:
-          CI: "true"
+  package:
+    name: Package (Linux)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run dist:linux
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-build
+          path: |
+            release/*.AppImage
+            release/*.deb
+          if-no-files-found: error
